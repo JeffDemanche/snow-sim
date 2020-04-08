@@ -1,0 +1,24 @@
+#ifndef GRID_H
+#define GRID_H
+
+#include "particle.h"
+#include "gridnode.h"
+
+using namespace std;
+
+class Grid
+{
+public:
+    Grid();
+    
+    
+
+private:
+    vector<Particle> m_particles;
+    vector<GridNode> m_nodes;
+
+    
+
+};
+
+#endif // GRID_H
