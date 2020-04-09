@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.11.0, 2020-04-08T15:50:20. -->
+<!-- Written by QtCreator 4.11.0, 2020-04-09T15:10:31. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -289,7 +289,7 @@
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:C:/Users/jeffr/Desktop/CSCI2240/snow-sim/snow-sim.pro</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">C:/Users/jeffr/Desktop/CSCI2240/snow-sim/snow-sim.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">C:\Users\jeffr\Desktop\CSCI2240\snow-sim\meshes\sphere.obj</value>
+    <value type="QString" key="RunConfiguration.Arguments">C:\Users\jeffr\Desktop\CSCI2240\snow-sim\meshes\sphere.obj 10000</value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>

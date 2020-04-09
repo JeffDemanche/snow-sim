@@ -1,6 +1,7 @@
 #include "particle.h"
 
-Particle::Particle()
+Particle::Particle(Vector3f centerPos):
+    m_position(centerPos)
 {
 
 }

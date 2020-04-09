@@ -8,7 +8,7 @@ using namespace Eigen;
 class Particle
 {
 public:
-    Particle();
+    Particle(Vector3f centerPos);
 
     void updatePosition(float timeStep);
 

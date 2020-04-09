@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include "mesh.h"
+#include "mpm.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -18,6 +19,7 @@ int main(int argc, char *argv[])
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addPositionalArgument("snowmesh", "Mesh file to use as snow");
+    parser.addPositionalArgument("numparticles", "Number of particles to create within snowmesh");
 
     parser.process(a);
 
@@ -28,22 +30,22 @@ int main(int argc, char *argv[])
         return 1;
     }
     QString infile = args[0];
+    int numParticles = args[1].toInt();
 
     ////////////////////////////////////////////////////////////////////////////////
 
     Mesh m;
     m.loadFromFile(infile.toStdString());
 
+    MPM mpm = MPM(m, numParticles);
+
     auto t0 = high_resolution_clock::now();
-
-
-
     auto t1 = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(t1-t0).count();
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    cout << "Execution takes: " << duration << " milliseconds." <<endl;
+    cout << "Total simulation takes: " << duration << " milliseconds." <<endl;
 
     a.exit();
 }
