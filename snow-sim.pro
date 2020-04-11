@@ -1,8 +1,26 @@
 QT += gui
 QT += xml
+QT += core gui opengl
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
+
+QMAKE_CXXFLAGS += -std=c++14
+#QMAKE_LFLAGS += -no-pie
+CONFIG += c++14
+
+unix:!macx {
+    LIBS += -lGLU
+}
+macx {
+    QMAKE_CFLAGS_X86_64 += -mmacosx-version-min=10.7
+    QMAKE_CXXFLAGS_X86_64 = $$QMAKE_CFLAGS_X86_64
+    CONFIG += c++11
+}
+win32 {
+    DEFINES += GLEW_STATIC
+    LIBS += -lopengl32 -lglu32
+}
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -17,12 +35,25 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 QMAKE_CXXFLAGS += -msse2
 
+INCLUDEPATH += src glew-1.10.0/include
+DEPENDPATH += src glew-1.10.0/include
+
 SOURCES += main.cpp \
     grid.cpp \
     gridnode.cpp \
     mesh.cpp \
     mpm.cpp \
-    particle.cpp
+    particle.cpp \
+    mainwindow.cpp \
+    glwidget.cpp \
+    glew-1.10.0/src/glew.c \
+    util/resourceloader.cpp \
+    openglshape.cpp \
+    gl/datatype/VBO.cpp \
+    gl/datatype/VBOAttribMarker.cpp \
+    gl/datatype/VAO.cpp \
+    gl/datatype/IBO.cpp \
+    gl/GLDebug.cpp
 
 HEADERS += \
     grid.h \
@@ -330,4 +361,24 @@ HEADERS += \
     Eigen/src/SVD/JacobiSVD_LAPACKE.h \
     Eigen/src/SVD/SVDBase.h \
     Eigen/src/SVD/UpperBidiagonalization.h \
-    Eigen/src/UmfPackSupport/UmfPackSupport.h
+    Eigen/src/UmfPackSupport/UmfPackSupport.h \
+    mainwindow.h \
+    glwidget.h \
+    glew-1.10.0/include/GL/glew.h \
+    ui_mainwindow.h \
+    util/resourceloader.h \
+    openglshape.h \
+    gl/datatype/VBO.h\
+    gl/datatype/VBOAttribMarker.h \
+    gl/datatype/VAO.h \
+    gl/datatype/IBO.h \
+    gl/GLDebug.h
+
+FORMS += \
+    mainwindow.ui
+
+DISTFILES += \
+    shaders/shader.frag \
+    shaders/shader.vert \
+    shaders/particle.vert \
+    shaders/particle.frag

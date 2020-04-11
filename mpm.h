@@ -12,6 +12,11 @@ class MPM
 {
 public:
     MPM(Mesh snowMesh, int numParticles);
+    MPM();
+
+    std::vector<Eigen::Vector3f> update(float seconds);
+    float randomNumber(float Min, float Max);
+    std::vector<Eigen::Vector3f> getPositions();
 
 private:
     Mesh m_snowMesh;
@@ -21,6 +26,7 @@ private:
     float m_timer;
 
     Grid* m_grid;
+    std::vector<Eigen::Vector3f> m_particlePositions;
 
 };
 

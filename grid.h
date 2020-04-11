@@ -12,9 +12,12 @@ class Grid
 public:
     Grid(Mesh snowMesh, size_t numParticles);
 
+    vector<Vector3f> getPoints();
+
 private:
     vector<Particle> m_particles;
     vector<GridNode> m_nodes;
+    vector<Vector3f> m_points;
 
     /**
      * This is run before the simulation even begins. It loads the particles

@@ -14,6 +14,7 @@ void Grid::initParticles(vector<Vector3f> points)
     for(Vector3f p : points) {
         Particle particle = Particle(p);
         m_particles.push_back(particle);
+        m_points.push_back(p);
     }
 }
 
@@ -30,4 +31,8 @@ vector<Vector3f> Grid::pointsFromMesh(Mesh mesh, size_t numParticles)
     auto duration = chrono::duration_cast<chrono::milliseconds>(t1-t0).count();
     cout << "Generating points: " << duration << " milliseconds" << endl;
     return points;
+}
+
+vector<Vector3f> Grid::getPoints() {
+    return m_points;
 }

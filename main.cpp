@@ -1,4 +1,5 @@
 #include <QCoreApplication>
+#include <QApplication>
 #include <QCommandLineParser>
 #include <QDir>
 
@@ -7,13 +8,15 @@
 
 #include "mesh.h"
 #include "mpm.h"
+#include "mainwindow.h"
 
 using namespace std;
 using namespace std::chrono;
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+    //QCoreApplication a(argc, argv);
+    QApplication a(argc, argv);
 
     ////////////////////////////////////////////////////////////////////////////////
     QCommandLineParser parser;
@@ -23,21 +26,25 @@ int main(int argc, char *argv[])
 
     parser.process(a);
 
-    const QStringList args = parser.positionalArguments();
-    if(args.size() < 1) {
-        cerr << "Error: Wrong number of arguments" << endl;
-        a.exit(1);
-        return 1;
-    }
-    QString infile = args[0];
-    int numParticles = args[1].toInt();
+//    const QStringList args = parser.positionalArguments();
+//    if(args.size() < 1) {
+//        cerr << "Error: Wrong number of arguments" << endl;
+//        a.exit(1);
+//        return 1;
+//    }
+//    QString infile = args[0];
+//    int numParticles = args[1].toInt();
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    Mesh m;
-    m.loadFromFile(infile.toStdString());
+//    Mesh m;
+//    m.loadFromFile(infile.toStdString());
 
-    MPM mpm = MPM(m, numParticles);
+//    MPM mpm = MPM(m, numParticles);
+
+    MainWindow w;
+    w.show();
+    return a.exec();
 
     auto t0 = high_resolution_clock::now();
     auto t1 = high_resolution_clock::now();
