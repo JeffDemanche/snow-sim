@@ -14,6 +14,56 @@ public:
 
     vector<Vector3f> getPoints();
 
+    /**
+     * Step 1. Calculates the grid mass values based on particles.
+     */
+    void computeGridMass();
+
+    /**
+     * Step 1. Calculates the grid velocity values based on particles.
+     */
+    void computeGridVelocity();
+
+    /**
+     * Step 2. Calculates the volumes for each particle.
+     */
+    void computeParticleVolumes();
+
+    /**
+     * Step 3. Calculates forces acting at grid points.
+     */
+    void computeGridForces();
+
+    /**
+     * Step 4. Calculates updated grid velocities.
+     */
+    void updateGridVelocities();
+
+    /**
+     * Step 5. Temporary grid node velocity is updated with grid-based body collision.
+     */
+    void gridCollision();
+
+    /**
+     * Step 6. Implicit integrator.
+     */
+    void implicitSolver();
+
+    /**
+     * Step 7. Update deformation gradient for particles.
+     */
+    void calculateDeformationGradient();
+
+    /**
+     * Step 8. Update particle velocities after doing the grid work.
+     */
+    void updateParticleVelocities();
+
+    /**
+     * Step 10. Update particle positions.
+     */
+    void updateParticlePositions();
+
 private:
     vector<Particle> m_particles;
     vector<GridNode> m_nodes;
