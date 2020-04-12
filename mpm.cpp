@@ -52,6 +52,9 @@ std::vector<Vector3f> MPM::update(float seconds) {
 
     m_grid->updateParticlePositions();
 
+    // Or other way to send updated positions to GLWidget
+    std::vector<Vector3f> newPositions = m_grid->getPoints();
+    return newPositions;
 }
 
 std::vector<Vector3f> MPM::getPositions() {

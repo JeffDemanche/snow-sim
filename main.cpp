@@ -50,6 +50,11 @@ int main(int argc, char *argv[])
         MainWindow w;
         w.show();
         return a.exec();
+    } else {
+        Mesh m;
+        m.loadFromFile(infile.toStdString());
+        MPM mpm = MPM(m, numParticles);
+        // TODO: Run simulation loop here
     }
 
     auto t0 = high_resolution_clock::now();

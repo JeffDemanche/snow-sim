@@ -1626,6 +1626,8 @@ main.o: main.cpp /Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qcommandlineparser.h \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/QDir \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qdir.h \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/QCommandLineOption \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qcommandlineoption.h \
 		mesh.h \
 		Eigen/StdVector \
 		Eigen/Core \

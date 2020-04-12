@@ -111,18 +111,18 @@ Vector3f Mesh::randPosition()
             bbMax.z() = _vertices[i].z();
     }
 
-    // Keep generating random points within the bounding box untill we get one
+    // Keep generating random points within the bounding box until we get one
     // within the actual mesh.
-    float randX = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-    float randY = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-    float randZ = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    float randX = randomNumber(bbMin.x(), bbMax.x());
+    float randY = randomNumber(bbMin.y(), bbMax.y());
+    float randZ = randomNumber(bbMin.z(), bbMax.z());
 
     Vector3f randPoint = Vector3f(randX, randY, randZ);
 
     while(!pointInMesh(randPoint)) {
-        randX = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-        randY = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-        randZ = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        float randX = randomNumber(bbMin.x(), bbMax.x());
+        float randY = randomNumber(bbMin.y(), bbMax.y());
+        float randZ = randomNumber(bbMin.z(), bbMax.z());
 
         randPoint = Vector3f(randX, randY, randZ);
     }
@@ -180,4 +180,8 @@ bool Mesh::pointInMesh(Vector3f point)
 float Mesh::triSign(Vector2f a, Vector2f b, Vector2f c)
 {
     return (a.x() - c.x()) * (b.y() - c.y()) - (b.x() - c.x()) * (a.y()- c.y());
+}
+
+float Mesh::randomNumber(float Min, float Max) {
+    return ((float(rand()) / float(RAND_MAX)) * (Max - Min)) + Min;
 }

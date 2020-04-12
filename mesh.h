@@ -32,6 +32,7 @@ private:
     bool pointInMesh(Vector3f point);
 
     float triSign(Vector2f a, Vector2f b, Vector2f c);
+    float randomNumber(float Min, float Max);
 
 };
 
