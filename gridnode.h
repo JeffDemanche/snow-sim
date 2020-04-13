@@ -8,7 +8,9 @@ using namespace Eigen;
 class GridNode
 {
 public:
-    GridNode();
+    GridNode(Vector3f position);
+
+    Vector3f getPosition();
 
 private:
     float m_mass;

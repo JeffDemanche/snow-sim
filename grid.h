@@ -10,7 +10,7 @@ using namespace std;
 class Grid
 {
 public:
-    Grid(Mesh snowMesh, size_t numParticles);
+    Grid(Mesh snowMesh, size_t numParticles, float gridSpacing);
 
     vector<Vector3f> getPoints();
 
@@ -76,10 +76,25 @@ private:
     void initParticles(vector<Vector3f> points);
 
     /**
+     * Takes minimum and maximum corners of the grid and creates the GridNodes
+     */
+    void initGrid(Vector3f min, Vector3f max, float gridSpacing);
+
+    /**
+     * Clears all GridNode info except position
+     */
+    void reset();
+
+    /**
      * Generates a list of points positions inside the snow mesh. The
      * amount of particles is determined by m_numParticles.
      */
     vector<Vector3f> pointsFromMesh(Mesh mesh, size_t numParticles);
+
+    /**
+     * Finds bounds of grid based on mesh bounding box and lowest y point in scene (the ground)
+     */
+    pair<Vector3f, Vector3f> findGridBoundaries(Vector3f bbMin, Vector3f bbMax, float lowestY);
 
 };
 

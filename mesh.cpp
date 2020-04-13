@@ -84,8 +84,8 @@ void Mesh::saveToFile(const std::string &filePath)
     outfile.close();
 }
 
-Vector3f Mesh::randPosition()
-{
+void Mesh::buildBoundingBox() {
+
     if (_vertices.size() == 0) {
         std::cerr << "Can't generate points in mesh volume, no verts on mesh" << std::endl;
     }
@@ -110,19 +110,32 @@ Vector3f Mesh::randPosition()
         if (_vertices[i].z() > bbMax.z())
             bbMax.z() = _vertices[i].z();
     }
+    m_bbMin = bbMin;
+    m_bbMax = bbMax;
+}
+
+pair<Vector3f, Vector3f> Mesh::boundingBoxCorners() {
+    return pair<Vector3f, Vector3f>(m_bbMin, m_bbMax);
+}
+
+Vector3f Mesh::randPosition()
+{
+    if (_vertices.size() == 0) {
+        std::cerr << "Can't generate points in mesh volume, no verts on mesh" << std::endl;
+    }
 
     // Keep generating random points within the bounding box until we get one
     // within the actual mesh.
-    float randX = randomNumber(bbMin.x(), bbMax.x());
-    float randY = randomNumber(bbMin.y(), bbMax.y());
-    float randZ = randomNumber(bbMin.z(), bbMax.z());
+    float randX = randomNumber(m_bbMin.x(), m_bbMax.x());
+    float randY = randomNumber(m_bbMin.y(), m_bbMax.y());
+    float randZ = randomNumber(m_bbMin.z(), m_bbMax.z());
 
     Vector3f randPoint = Vector3f(randX, randY, randZ);
 
     while(!pointInMesh(randPoint)) {
-        float randX = randomNumber(bbMin.x(), bbMax.x());
-        float randY = randomNumber(bbMin.y(), bbMax.y());
-        float randZ = randomNumber(bbMin.z(), bbMax.z());
+        float randX = randomNumber(m_bbMin.x(), m_bbMax.x());
+        float randY = randomNumber(m_bbMin.y(), m_bbMax.y());
+        float randZ = randomNumber(m_bbMin.z(), m_bbMax.z());
 
         randPoint = Vector3f(randX, randY, randZ);
     }

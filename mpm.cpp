@@ -1,10 +1,13 @@
 #include "mpm.h"
 
+// Define parameters here
+const float _gridSpacing = 0.1; // units for this would be cm (group that did this a few years ago used 0.001 m)
+
 MPM::MPM(Mesh snowMesh, int numParticles):
     m_snowMesh(snowMesh),
     m_numParticles(numParticles)
 {
-    m_grid = new Grid(snowMesh, numParticles);
+    m_grid = new Grid(snowMesh, numParticles, _gridSpacing);
     m_particlePositions = m_grid->getPoints();
 }
 

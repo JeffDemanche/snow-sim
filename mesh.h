@@ -21,9 +21,20 @@ public:
     void saveToFile(const std::string &filePath);
 
     /**
+     * Builds bounding box for the mesh
+     */
+    void buildBoundingBox();
+
+    /**
+     * Returns max and min of bounding box
+     */
+    std::pair<Vector3f, Vector3f> boundingBoxCorners();
+
+    /**
      * Generates a point randomly within the bounds of the mesh.
      */
     Vector3f randPosition();
+
 
 private:
     std::vector<Eigen::Vector3f> _vertices;
@@ -34,6 +45,8 @@ private:
     float triSign(Vector2f a, Vector2f b, Vector2f c);
     float randomNumber(float Min, float Max);
 
+    Vector3f m_bbMin;
+    Vector3f m_bbMax;
 };
 
 #endif // MESH_H
