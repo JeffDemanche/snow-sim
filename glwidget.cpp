@@ -11,6 +11,7 @@
 GLWidget::GLWidget(QGLFormat format, QWidget *parent)
     : QGLWidget(format, parent), m_angleX(0), m_angleY(0.5f), m_zoom(10.f)
 {
+    m_maxParticles = 2500;
     m_groundHeight = -2.f;
     srand(time(NULL));
 
@@ -53,6 +54,8 @@ void GLWidget::initializeGL() {
     m_particleProgram = ResourceLoader::createShaderProgram("shaders/particle.vert", "shaders/particle.frag");
     initPoints(m_MPM.getPositions());
 
+    initGrid(m_MPM.getGridBounds());
+
     rebuildMatrices();
 
     m_time.start();
@@ -83,6 +86,10 @@ void GLWidget::paintGL() {
     for (int i = 0; i < m_points.size(); i++) {
         m_points[i]->draw();
     }
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    m_grid->draw();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glUseProgram(0);
 }
 
@@ -133,12 +140,27 @@ void GLWidget::initGround() {
 
 void GLWidget::initPoints(std::vector<Eigen::Vector3f> positions) {
     m_points.clear();
+
+    std::vector<Eigen::Vector3f> renderablePoints;
+    // If there are more particles than the visualizer can handle
+    if (positions.size() > m_maxParticles) {
+        int step = positions.size() / m_maxParticles;
+        // then step through and uniformly sample the maximum number of points
+        for (int i = 0; i < m_maxParticles; i++) {
+            if (true) {
+                renderablePoints.push_back(positions[i*step]);
+            }
+        }
+    } else {
+        renderablePoints = positions;
+    }
+
     int numVertices = 3;
     std::vector<glm::vec3> data(numVertices);
     float halfWidth = 0.01;
     float halfHeight = 0.01;
 
-    for (int i = 0; i < positions.size(); i++) {
+    for (int i = 0; i < renderablePoints.size(); i++) {
         Eigen::Vector3f point = positions[i];
         data[0] = glm::vec3(point(0) + halfWidth, point(1) - halfHeight, point(2));
         data[1] = glm::vec3(point(0) + halfWidth, point(1) + halfHeight, point(2));
@@ -151,6 +173,75 @@ void GLWidget::initPoints(std::vector<Eigen::Vector3f> positions) {
 
         m_points.push_back(tri);
     }
+}
+
+void GLWidget::initGrid(std::pair<Eigen::Vector3f, Eigen::Vector3f> gridBounds) {
+    int numTriangles = 8;
+    std::vector<glm::vec3> data(numTriangles*3);
+    Eigen::Vector3f min = gridBounds.first;
+    Eigen::Vector3f max = gridBounds.second;
+
+    glm::vec3 v1 = glm::vec3(min.x(), min.y(), min.z());
+    glm::vec3 v2 = glm::vec3(max.x(), min.y(), min.z());
+    glm::vec3 v3 = glm::vec3(min.x(), max.y(), min.z());
+    glm::vec3 v4 = glm::vec3(max.x(), max.y(), min.z());
+    glm::vec3 v5 = glm::vec3(min.x(), min.y(), max.z());
+    glm::vec3 v6 = glm::vec3(max.x(), min.y(), max.z());
+    glm::vec3 v7 = glm::vec3(max.x(), max.y(), max.z());
+    glm::vec3 v8 = glm::vec3(min.x(), max.y(), max.z());
+
+    // Top face
+    data[0] = v8;
+    data[1] = v4;
+    data[2] = v7;
+    data[3] = v3;
+    data[4] = v4;
+    data[5] = v8;
+
+    // Right face
+    data[6] = v4;
+    data[7] = v7;
+    data[8] = v6;
+    data[9] = v6;
+    data[10] = v2;
+    data[11] = v4;
+
+    // Bottom face
+    data[12] = v1;
+    data[13] = v2;
+    data[14] = v6;
+    data[15] = v6;
+    data[16] = v5;
+    data[17] = v2;
+
+    // Left face
+    data[18] = v8;
+    data[19] = v3;
+    data[20] = v5;
+    data[21] = v1;
+    data[22] = v3;
+    data[23] = v5;
+
+//    // Back face
+//    data[24] = v1;
+//    data[25] = v2;
+//    data[26] = v3;
+//    data[27] = v3;
+//    data[28] = v2;
+//    data[29] = v4;
+
+//    // Front face
+//    data[30] = v8;
+//    data[31] = v6;
+//    data[32] = v5;
+//    data[33] = v8;
+//    data[34] = v7;
+//    data[35] = v6;
+
+    m_grid = std::make_unique<OpenGLShape>();
+    m_grid->setVertexData(&data[0][0], data.size() * 3, VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLES, numTriangles*3);
+    m_grid->setAttribute(ShaderAttrib::POSITION, 3, 0, VBOAttribMarker::DATA_TYPE::FLOAT, false);
+    m_grid->buildVAO();
 }
 
 void GLWidget::tick()

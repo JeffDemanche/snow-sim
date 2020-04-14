@@ -53,6 +53,9 @@ private:
     std::unique_ptr<OpenGLShape> m_ground;
     float m_groundHeight;
 
+    std::unique_ptr<OpenGLShape> m_grid;
+    void initGrid(std::pair<Eigen::Vector3f, Eigen::Vector3f> gridBounds);
+
     std::vector<glm::vec3> m_samplePoints;
     std::vector<OpenGLShape*> m_points;
     void initPoints(std::vector<Eigen::Vector3f> positions);
@@ -60,6 +63,8 @@ private:
     MPM m_MPM;
     QTime m_time;
     QTimer m_timer;
+
+    int m_maxParticles = 2500;
 
 private slots:
     void tick();

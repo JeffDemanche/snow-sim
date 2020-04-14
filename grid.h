@@ -13,6 +13,7 @@ public:
     Grid(Mesh snowMesh, size_t numParticles, float gridSpacing);
 
     vector<Vector3f> getPoints();
+    pair<Vector3f, Vector3f> getGridBounds();
 
     /**
      * Step 1. Calculates the grid mass values based on particles.
@@ -68,6 +69,7 @@ private:
     vector<Particle> m_particles;
     vector<GridNode> m_nodes;
     vector<Vector3f> m_points;
+    pair<Vector3f, Vector3f> m_gridBounds;
 
     /**
      * This is run before the simulation even begins. It loads the particles

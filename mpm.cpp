@@ -64,6 +64,10 @@ std::vector<Vector3f> MPM::getPositions() {
     return m_particlePositions;
 }
 
+std::pair<Vector3f, Vector3f> MPM::getGridBounds() {
+    return m_grid->getGridBounds();
+}
+
 float MPM::randomNumber(float Min, float Max) {
     return ((float(rand()) / float(RAND_MAX)) * (Max - Min)) + Min;
 }

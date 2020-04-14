@@ -17,6 +17,7 @@ public:
     std::vector<Eigen::Vector3f> update(float seconds);
     float randomNumber(float Min, float Max);
     std::vector<Eigen::Vector3f> getPositions();
+    std::pair<Vector3f, Vector3f> getGridBounds();
 
 private:
     Mesh m_snowMesh;

@@ -10,6 +10,8 @@ Grid::Grid(Mesh snowMesh, size_t numParticles, float gridSpacing)
     pair<Vector3f, Vector3f> boundingPoints = snowMesh.boundingBoxCorners();
     pair<Vector3f, Vector3f> gridBounds = findGridBoundaries(boundingPoints.first, boundingPoints.second, -2);
     initGrid(gridBounds.first, gridBounds.second, gridSpacing);
+
+    std::cout << "Number of grid nodes: " << m_nodes.size() << std::endl;
 }
 
 void Grid::initParticles(vector<Vector3f> points)
@@ -30,7 +32,9 @@ pair<Vector3f, Vector3f> Grid::findGridBoundaries(Vector3f bbMin, Vector3f bbMax
     Vector3f gridMin(bbMin.x() - meshWidth, bbMin.y() - (spaceBelowMesh * 1.5), bbMin.z() - meshDepth);
     Vector3f gridMax(bbMax.x() + meshWidth, bbMax.y(), bbMax.z() + meshDepth);
 
-    return pair<Vector3f, Vector3f>(gridMin, gridMax);
+    pair<Vector3f, Vector3f> result = pair<Vector3f, Vector3f>(gridMin, gridMax);
+    m_gridBounds = result;
+    return result;
 }
 
 void Grid::initGrid(Vector3f min, Vector3f max, float gridSpacing) {
@@ -87,6 +91,10 @@ vector<Vector3f> Grid::pointsFromMesh(Mesh mesh, size_t numParticles)
 vector<Vector3f> Grid::getPoints()
 {
     return m_points;
+}
+
+pair<Vector3f, Vector3f> Grid::getGridBounds() {
+    return m_gridBounds;
 }
 
 void Grid::computeGridMass()
