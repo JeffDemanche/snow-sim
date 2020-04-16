@@ -10,7 +10,7 @@ using namespace std;
 class Grid
 {
 public:
-    Grid(Mesh snowMesh, size_t numParticles, float gridSpacing);
+    Grid(Mesh snowMesh, size_t numParticles);
 
     vector<Vector3f> getPoints();
     pair<Vector3f, Vector3f> getGridBounds();
@@ -46,6 +46,11 @@ public:
     void gridCollision();
 
     /**
+     * Step 6: Explicit integrator
+     */
+    void explicitSolver();
+
+    /**
      * Step 6. Implicit integrator.
      */
     void implicitSolver();
@@ -70,6 +75,10 @@ private:
     vector<GridNode> m_nodes;
     vector<Vector3f> m_points;
     pair<Vector3f, Vector3f> m_gridBounds;
+    float m_gridWidth;
+    float m_gridHeight;
+    float m_gridDepth;
+    float m_gridSpacing;
 
     /**
      * This is run before the simulation even begins. It loads the particles
@@ -80,7 +89,7 @@ private:
     /**
      * Takes minimum and maximum corners of the grid and creates the GridNodes
      */
-    void initGrid(Vector3f min, Vector3f max, float gridSpacing);
+    void initGrid(Vector3f min, Vector3f max);
 
     /**
      * Clears all GridNode info except position
@@ -97,6 +106,9 @@ private:
      * Finds bounds of grid based on mesh bounding box and lowest y point in scene (the ground)
      */
     pair<Vector3f, Vector3f> findGridBoundaries(Vector3f bbMin, Vector3f bbMax, float lowestY);
+
+    std::vector<int> getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos);
+    float weightFunctionN(float x);
 
 };
 

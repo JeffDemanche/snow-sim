@@ -1,35 +1,28 @@
 #include "mpm.h"
 
-// Define parameters here
-const float _gridSpacing = 0.1; // units for this would be cm (group that did this a few years ago used 0.001 m)
-
 MPM::MPM(Mesh snowMesh, int numParticles):
     m_snowMesh(snowMesh),
     m_numParticles(numParticles)
 {
-    m_grid = new Grid(snowMesh, numParticles, _gridSpacing);
+    m_grid = new Grid(snowMesh, numParticles);
     m_particlePositions = m_grid->getPoints();
+    m_firstStep = true;
 }
 
 MPM::MPM() {
 }
 
-// Right now this is just moving all particles down to confirm visualization
 std::vector<Vector3f> MPM::update(float seconds) {
-//    std::vector<Vector3f> newPositions;
-//    for (int i = 0; i < m_particlePositions.size(); i++) {
-//        newPositions.push_back(m_particlePositions[i] + Vector3f(0, -0.1 * seconds, 0));
-//        m_particlePositions[i] = m_particlePositions[i] + Vector3f(0, -0.1 * seconds, 0);
-//    }
-//    return newPositions;
-
 
     // Step 1
     m_grid->computeGridMass();
     m_grid->computeGridVelocity();
 
     // Step 2
-    m_grid->computeParticleVolumes();
+    if (m_firstStep) {
+        m_grid->computeParticleVolumes();
+        m_firstStep = false;
+    }
 
     // Step 3
     m_grid->computeGridForces();
@@ -41,7 +34,8 @@ std::vector<Vector3f> MPM::update(float seconds) {
     m_grid->gridCollision();
 
     // Step 6
-    m_grid->implicitSolver();
+    m_grid->explicitSolver();
+    //m_grid->implicitSolver();
 
     // Step 7
     m_grid->calculateDeformationGradient();

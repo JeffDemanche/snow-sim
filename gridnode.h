@@ -8,9 +8,14 @@ using namespace Eigen;
 class GridNode
 {
 public:
-    GridNode(Vector3f position);
+    GridNode(Vector3f position, Vector3i index);
 
     Vector3f getPosition();
+    Vector3i getIndex();
+    void setMass(float mass);
+    float getMass();
+    void setVelocity(Vector3f velocity);
+    Vector3f getVelocity();
 
 private:
     float m_mass;
@@ -20,6 +25,7 @@ private:
 
     Vector3f m_force;
     Vector3f m_position;
+    Vector3i m_index;
 
     Vector3f m_r;
     Vector3f m_s;
@@ -34,7 +40,6 @@ private:
     float m_alpha;
     float m_residual;
     bool m_implicitSolved;
-
 };
 
 #endif // GRIDNODE_H

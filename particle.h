@@ -8,9 +8,14 @@ using namespace Eigen;
 class Particle
 {
 public:
-    Particle(Vector3f centerPos);
+    Particle(Vector3f centerPos, float mass, Vector3f velocity);
 
     void updatePosition(float timeStep);
+    Vector3f getPosition();
+    Vector3f getVelocity();
+    float getMass();
+    void closestGridNode(int i);
+    int closestGridNode();
 
 private:
     Matrix3f m_elasticDeformation;
@@ -20,11 +25,13 @@ private:
 
     Vector3f m_position;
 
-    float m_velocity;
+    Vector3f m_velocity;
 
     float m_mass;
 
     float m_volume;
+
+    int m_closestGridNode;
 
 };
 

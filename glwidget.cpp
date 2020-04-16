@@ -212,7 +212,7 @@ void GLWidget::initGrid(std::pair<Eigen::Vector3f, Eigen::Vector3f> gridBounds) 
     data[14] = v6;
     data[15] = v6;
     data[16] = v5;
-    data[17] = v2;
+    data[17] = v1;
 
     // Left face
     data[18] = v8;
