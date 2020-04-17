@@ -109,6 +109,7 @@ private:
 
     std::vector<int> getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos);
     float weightFunctionN(float x);
+    float finalWeightN(Vector3f particlePos, Vector3f nodePos);
 
 };
 

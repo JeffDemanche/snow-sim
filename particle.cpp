@@ -18,6 +18,14 @@ Vector3f Particle::getVelocity() {
     return m_velocity;
 }
 
+float Particle::getVolume() {
+    return m_volume;
+}
+
+void Particle::setVolume(float volume) {
+    m_volume = volume;
+}
+
 // Methods to keep track of which gridNode index the particle is closest to; used to avoid looping over gridNodes repeatedly
 void Particle::closestGridNode(int i) {
     m_closestGridNode = i;

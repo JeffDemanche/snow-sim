@@ -14,6 +14,10 @@ public:
     Vector3f getPosition();
     Vector3f getVelocity();
     float getMass();
+    float getVolume();
+
+    void setVolume(float volume);
+
     void closestGridNode(int i);
     int closestGridNode();
 

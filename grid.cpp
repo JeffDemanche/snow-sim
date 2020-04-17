@@ -2,6 +2,7 @@
 #include <chrono>
 #include <iostream>
 #include <set>
+#include <math.h>
 
 // DEFINE PARAMETERS HERE
 const float _particleMass = 0.05;
@@ -175,6 +176,14 @@ float Grid::weightFunctionN(float x) {
     }
 }
 
+float Grid::finalWeightN(Vector3f particlePos, Vector3f gridNodePos) {
+    float w_x = weightFunctionN(1.f / m_gridSpacing * (particlePos.x() - gridNodePos.x()));
+    float w_y = weightFunctionN(1.f / m_gridSpacing * (particlePos.y() - gridNodePos.y()));
+    float w_z = weightFunctionN(1.f / m_gridSpacing * (particlePos.z() - gridNodePos.z()));
+
+    return w_x * w_y * w_z;
+}
+
 std::vector<int> Grid::getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos) {
     // return list of m_nodes indices of grid nodes within 2*gridSpacing neighborhood of particlePos
     // Check neighborhood of size 3*gridspacing since the origin grid node might be shifted
@@ -224,12 +233,8 @@ void Grid::computeGridVelocity()
             int nodeIndex = inRange[n];
             Vector3f gridNodePos = m_nodes[nodeIndex].getPosition();
 
-            float w_x = weightFunctionN(1.f / m_gridSpacing * (particlePos.x() - gridNodePos.x()));
-            float w_y = weightFunctionN(1.f / m_gridSpacing * (particlePos.y() - gridNodePos.y()));
-            float w_z = weightFunctionN(1.f / m_gridSpacing * (particlePos.z() - gridNodePos.z()));
-
             // Calculate final weight function
-            float w = w_x * w_y * w_z;
+            float w = finalWeightN(particlePos, gridNodePos);
 
             Vector3f particleContribution;
             if (m_nodes[nodeIndex].getMass() == 0) {
@@ -245,6 +250,17 @@ void Grid::computeGridVelocity()
 void Grid::computeParticleVolumes()
 {
     // TODO Step 2. See eq. 3.8. I think this only needs to be done once for the whole simulation.
+    for (size_t p = 0; p < m_particles.size(); p++) {
+        Particle particle = m_particles[p];
+
+        float particleDensity = 0;
+        for (size_t i = 0; i < m_nodes.size(); i++) {
+            GridNode node = m_nodes[i];
+            particleDensity += particle.getMass() * finalWeightN(particle.getPosition(), node.getPosition()) / pow(m_gridSpacing, 3);
+        }
+
+        particle.setVolume(particle.getMass() / particleDensity);
+    }
 }
 
 void Grid::computeGridForces()
