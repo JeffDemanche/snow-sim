@@ -61,7 +61,7 @@ public:
     /**
      * Step 7. Update deformation gradient for particles.
      */
-    void calculateDeformationGradient();
+    void calculateDeformationGradient(float delta_t);
 
     /**
      * Step 8. Update particle velocities after doing the grid work.
@@ -123,7 +123,11 @@ private:
 
     std::vector<int> getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos);
     float weightFunctionN(float x);
-    float finalWeightN(Vector3f particlePos, Vector3f nodePos);
+    float weightGradientFunctionDelN(float x);
+    float weightN(Vector3f particlePos, Vector3f nodePos);
+    float weightGradientDelOmega(Vector3f particlePos, Vector3f nodePos);
+
+    Vector3f velocityGradient(Particle particle);
 
 };
 

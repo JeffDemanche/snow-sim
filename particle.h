@@ -11,6 +11,14 @@ public:
     Particle(Vector3f centerPos, float mass, Vector3f velocity);
 
     void updatePosition(float timeStep);
+
+    Matrix3f getElasticDeformation();
+    void setElasticDeformation(Matrix3f elastic);
+    Matrix3f getPlasticDeformation();
+    void setPlasticDeformation(Matrix3f plastic);
+    Matrix3f getDeformationGradient();
+    void setDeformationGradient(Matrix3f deformation);
+
     Vector3f getPosition();
     Vector3f getVelocity();
     float getMass();

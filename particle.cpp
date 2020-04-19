@@ -6,6 +6,30 @@ Particle::Particle(Vector3f centerPos, float mass, Vector3f velocity):
 
 }
 
+Matrix3f Particle::getElasticDeformation() {
+    return m_elasticDeformation;
+}
+
+void Particle::setElasticDeformation(Matrix3f elastic) {
+    m_elasticDeformation = elastic;
+}
+
+Matrix3f Particle::getPlasticDeformation() {
+    return m_plasticDeformation;
+}
+
+void Particle::setPlasticDeformation(Matrix3f plastic) {
+    m_plasticDeformation = plastic;
+}
+
+Matrix3f Particle::getDeformationGradient() {
+    return m_deformationGradient;
+}
+
+void Particle::setDeformationGradient(Matrix3f deformation) {
+    m_deformationGradient = deformation;
+}
+
 Vector3f Particle::getPosition() {
     return m_position;
 }

@@ -164,7 +164,7 @@ void Grid::computeGridMass()
             Vector3f gridNodePos = m_nodes[nodeIndex].getPosition();
 
             // Calculate weight function
-            float w = finalWeightN(particlePos, gridNodePos);
+            float w = weightN(particlePos, gridNodePos);
 
             // Summation equation
             float particleContribution = m_particles[p].getMass() * w;
@@ -174,6 +174,7 @@ void Grid::computeGridMass()
 }
 
 float Grid::weightFunctionN(float x) {
+    // Eq. 3.3
     if (fabs(x) >= 0 && fabs(x) < 1) {
        return  (0.5 * fabs(x*x*x) - (x*x) + 2.f/3.f);
     } else if (fabs(x) < 2 && fabs(x) >= 1) {
@@ -183,12 +184,39 @@ float Grid::weightFunctionN(float x) {
     }
 }
 
-float Grid::finalWeightN(Vector3f particlePos, Vector3f gridNodePos) {
+float Grid::weightGradientFunctionDelN(float x) {
+    // Eq. 3.5
+    // x here is the distance between a particle and a grid node.
+    if (fabs(x) >= 0 && fabs(x) < 1) {
+       return  (x * x * 3.0 / 2.0) - (2 * fabs(x));
+    } else if (fabs(x) < 2 && fabs(x) >= 1) {
+        return (-0.5 * x * x) + (2 * fabs(x)) - 2;
+    } else {
+        return 0;
+    }
+}
+
+float Grid::weightN(Vector3f particlePos, Vector3f gridNodePos) {
+    // Eq. 3.2
+    // The weight some particle position has on some grid node position.
     float w_x = weightFunctionN(1.f / m_gridSpacing * (particlePos.x() - gridNodePos.x()));
     float w_y = weightFunctionN(1.f / m_gridSpacing * (particlePos.y() - gridNodePos.y()));
     float w_z = weightFunctionN(1.f / m_gridSpacing * (particlePos.z() - gridNodePos.z()));
 
     return w_x * w_y * w_z;
+}
+
+float Grid::weightGradientDelOmega(Vector3f particlePos, Vector3f nodePos) {
+    float x_dist = particlePos.x() - nodePos.x();
+    float y_dist = particlePos.y() - nodePos.y();
+    float z_dist = particlePos.z() - nodePos.z();
+
+    // Eq 3.4
+    float N_ix = weightGradientFunctionDelN(x_dist) * weightFunctionN(y_dist) * weightFunctionN(z_dist);
+    float N_iy = weightFunctionN(x_dist) * weightGradientFunctionDelN(y_dist) * weightFunctionN(z_dist);
+    float N_iz = weightFunctionN(x_dist) * weightFunctionN(y_dist) * weightGradientFunctionDelN(z_dist);
+
+    return N_ix * N_iy * N_iz;
 }
 
 std::vector<int> Grid::getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos) {
@@ -240,7 +268,7 @@ void Grid::computeGridVelocity()
             Vector3f gridNodePos = m_nodes[nodeIndex].getPosition();
 
             // Calculate final weight function
-            float w = finalWeightN(particlePos, gridNodePos);
+            float w = weightN(particlePos, gridNodePos);
 
             Vector3f particleContribution;
             if (m_nodes[nodeIndex].getMass() == 0) {
@@ -262,7 +290,7 @@ void Grid::computeParticleVolumes()
         float particleDensity = 0;
         for (size_t i = 0; i < m_nodes.size(); i++) {
             GridNode node = m_nodes[i];
-            particleDensity += particle.getMass() * finalWeightN(particle.getPosition(), node.getPosition()) / pow(m_gridSpacing, 3);
+            particleDensity += particle.getMass() * weightN(particle.getPosition(), node.getPosition()) / pow(m_gridSpacing, 3);
         }
 
         particle.setVolume(particle.getMass() / particleDensity);
@@ -282,6 +310,14 @@ void Grid::updateGridVelocities(float delta_t)
         GridNode curr = m_nodes[i];
         Vector3f v_star = curr.getVelocity() + delta_t * (1.f / curr.getMass()) * (curr.getForce() + _gravity * curr.getMass());
         curr.setNewVelocity(v_star);
+    }
+}
+
+Vector3f Grid::velocityGradient(Particle particle) {
+    float sum = 0;
+    for (int i = 0; i < m_nodes.size(); i++) {
+        //GridNode node = m_nodes[i];
+        //sum +=
     }
 }
 
@@ -330,9 +366,10 @@ void Grid::implicitSolver()
     // TODO Step 6. See Algorithm 1. This will likely require a lot of calculating grid node values.
 }
 
-void Grid::calculateDeformationGradient()
+void Grid::calculateDeformationGradient(float delta_t)
 {
     // TODO Step 7. See eq. 3.33 / 3.34
+    //Matrix3f tempElastic = (Matrix3f::Identity() + delta_t * weightGradientDelOmega()) *
 }
 
 void Grid::updateParticleVelocities()
