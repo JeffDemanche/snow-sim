@@ -28,7 +28,7 @@ std::vector<Vector3f> MPM::update(float seconds) {
     m_grid->computeGridForces();
 
     // Step 4
-    m_grid->updateGridVelocities();
+    m_grid->updateGridVelocities(seconds);
 
     // Step 5
     m_grid->gridCollision();
@@ -44,13 +44,15 @@ std::vector<Vector3f> MPM::update(float seconds) {
     m_grid->updateParticleVelocities();
 
     // Step 9
-    // Maybe this should be a separate method because it's acting on particles instead of grid nodes?
-    m_grid->gridCollision();
+    m_grid->particleCollision();
 
     m_grid->updateParticlePositions();
 
     // Or other way to send updated positions to GLWidget
     std::vector<Vector3f> newPositions = m_grid->getPoints();
+
+    m_grid->reset();
+
     return newPositions;
 }
 
@@ -60,6 +62,10 @@ std::vector<Vector3f> MPM::getPositions() {
 
 std::pair<Vector3f, Vector3f> MPM::getGridBounds() {
     return m_grid->getGridBounds();
+}
+
+std::vector<CollisionObject*> MPM::getColliders() {
+    return m_grid->getColliders();
 }
 
 float MPM::randomNumber(float Min, float Max) {

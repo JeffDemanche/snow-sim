@@ -53,7 +53,9 @@ SOURCES += main.cpp \
     gl/datatype/VBOAttribMarker.cpp \
     gl/datatype/VAO.cpp \
     gl/datatype/IBO.cpp \
-    gl/GLDebug.cpp
+    gl/GLDebug.cpp \
+    collisionobject.cpp \
+    ground.cpp
 
 HEADERS += \
     grid.h \
@@ -372,7 +374,9 @@ HEADERS += \
     gl/datatype/VBOAttribMarker.h \
     gl/datatype/VAO.h \
     gl/datatype/IBO.h \
-    gl/GLDebug.h
+    gl/GLDebug.h \
+    collisionobject.h \
+    ground.h
 
 FORMS += \
     mainwindow.ui

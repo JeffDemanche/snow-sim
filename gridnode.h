@@ -16,6 +16,10 @@ public:
     float getMass();
     void setVelocity(Vector3f velocity);
     Vector3f getVelocity();
+    void setNewVelocity(Vector3f v_star);
+    Vector3f getNewVelocity();
+    Vector3f getForce();
+    void setForce(Vector3f force);
 
 private:
     float m_mass;

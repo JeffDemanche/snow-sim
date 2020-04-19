@@ -5,6 +5,7 @@
 #include <QWheelEvent>
 #include <iostream>
 #include "gl/shaders/ShaderAttribLocations.h"
+#include "collisionobject.h"
 
 #define PI 3.14159265f
 
@@ -12,7 +13,6 @@ GLWidget::GLWidget(QGLFormat format, QWidget *parent)
     : QGLWidget(format, parent), m_angleX(0), m_angleY(0.5f), m_zoom(10.f)
 {
     m_maxParticles = 2500;
-    m_groundHeight = -2.f;
     srand(time(NULL));
 
     QStringList args = QApplication::arguments();
@@ -36,6 +36,9 @@ GLWidget::~GLWidget()
     for (int i = 0; i < m_points.size(); i++) {
         delete m_points[i];
     }
+    for (int i = 0; i < m_colliderShapes.size(); i++) {
+        delete m_colliderShapes[i];
+    }
 }
 
 void GLWidget::initializeGL() {
@@ -49,7 +52,8 @@ void GLWidget::initializeGL() {
     glClearColor(240/255.f, 240/255.f, 240/255.f, 0.0f);
 
     m_program = ResourceLoader::createShaderProgram("shaders/shader.vert", "shaders/shader.frag");
-    initGround();
+    //initGround();
+    initColliders();
 
     m_particleProgram = ResourceLoader::createShaderProgram("shaders/particle.vert", "shaders/particle.frag");
     initPoints(m_MPM.getPositions());
@@ -74,7 +78,10 @@ void GLWidget::paintGL() {
     glUniformMatrix4fv(glGetUniformLocation(m_program, "projection"), 1, GL_FALSE, glm::value_ptr(m_projection));
 
     // Draw
-    m_ground->draw();
+    //m_ground->draw();
+    for (int i = 0; i < m_colliderShapes.size(); i++) {
+        m_colliderShapes[i]->draw();
+    }
     // Unbind shader program.
     glUseProgram(0);
 
@@ -123,20 +130,32 @@ void GLWidget::rebuildMatrices() {
     update();
 }
 
-void GLWidget::initGround() {
-    int numVertices = 4;
-    std::vector<glm::vec3> data(numVertices);
-
-    data[0] = glm::vec3(5, m_groundHeight, 5);
-    data[1] = glm::vec3(5, m_groundHeight, -5);
-    data[2] = glm::vec3(-5, m_groundHeight, 5);
-    data[3] = glm::vec3(-5, m_groundHeight, -5);
-
-    m_ground = std::make_unique<OpenGLShape>();
-    m_ground->setVertexData(&data[0][0], data.size() * 3, VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLE_STRIP, numVertices);
-    m_ground->setAttribute(ShaderAttrib::POSITION, 3, 0, VBOAttribMarker::DATA_TYPE::FLOAT, false);
-    m_ground->buildVAO();
+void GLWidget::initColliders() {
+    std::vector<CollisionObject*> colliders = m_MPM.getColliders();
+    for (int i = 0; i < colliders.size(); i++) {
+        std::vector<glm::vec3> data = colliders[i]->drawingData();
+        OpenGLShape* shape = new OpenGLShape;
+        shape->setVertexData(&data[0][0], data.size() * 3, VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLES, data.size());
+        shape->setAttribute(ShaderAttrib::POSITION, 3, 0, VBOAttribMarker::DATA_TYPE::FLOAT, false);
+        shape->buildVAO();
+        m_colliderShapes.push_back(shape);
+    }
 }
+
+//void GLWidget::initGround() {
+//    int numVertices = 4;
+//    std::vector<glm::vec3> data(numVertices);
+
+//    data[0] = glm::vec3(5, m_groundHeight, 5);
+//    data[1] = glm::vec3(5, m_groundHeight, -5);
+//    data[2] = glm::vec3(-5, m_groundHeight, 5);
+//    data[3] = glm::vec3(-5, m_groundHeight, -5);
+
+//    m_ground = std::make_unique<OpenGLShape>();
+//    m_ground->setVertexData(&data[0][0], data.size() * 3, VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLE_STRIP, numVertices);
+//    m_ground->setAttribute(ShaderAttrib::POSITION, 3, 0, VBOAttribMarker::DATA_TYPE::FLOAT, false);
+//    m_ground->buildVAO();
+//}
 
 void GLWidget::initPoints(std::vector<Eigen::Vector3f> positions) {
     m_points.clear();

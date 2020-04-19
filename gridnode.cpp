@@ -29,3 +29,19 @@ void GridNode::setVelocity(Vector3f velocity) {
 Vector3f GridNode::getVelocity() {
     return m_velocity;
 }
+
+void GridNode::setNewVelocity(Vector3f v_star) {
+    m_newVelocity = v_star;
+}
+
+Vector3f GridNode::getNewVelocity() {
+    return m_newVelocity;
+}
+
+Vector3f GridNode::getForce() {
+    return m_force;
+}
+
+void GridNode::setForce(Vector3f force) {
+    m_force = force;
+}

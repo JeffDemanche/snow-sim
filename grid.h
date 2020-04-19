@@ -4,6 +4,8 @@
 #include "particle.h"
 #include "gridnode.h"
 #include "mesh.h"
+#include "collisionobject.h"
+#include "ground.h"
 
 using namespace std;
 
@@ -14,6 +16,7 @@ public:
 
     vector<Vector3f> getPoints();
     pair<Vector3f, Vector3f> getGridBounds();
+    std::vector<CollisionObject*> getColliders();
 
     /**
      * Step 1. Calculates the grid mass values based on particles.
@@ -38,7 +41,7 @@ public:
     /**
      * Step 4. Calculates updated grid velocities.
      */
-    void updateGridVelocities();
+    void updateGridVelocities(float delta_t);
 
     /**
      * Step 5. Temporary grid node velocity is updated with grid-based body collision.
@@ -66,9 +69,19 @@ public:
     void updateParticleVelocities();
 
     /**
+     * Step 9. Particle-based body collisions
+     */
+    void particleCollision();
+
+    /**
      * Step 10. Update particle positions.
      */
     void updateParticlePositions();
+
+    /**
+     * Clears all GridNode info except position
+     */
+    void reset();
 
 private:
     vector<Particle> m_particles;
@@ -79,6 +92,12 @@ private:
     float m_gridHeight;
     float m_gridDepth;
     float m_gridSpacing;
+    std::vector<CollisionObject*> m_colliders;
+
+    /**
+     * Initializes all colliding objects in the scene
+     */
+    void initColliders();
 
     /**
      * This is run before the simulation even begins. It loads the particles
@@ -90,11 +109,6 @@ private:
      * Takes minimum and maximum corners of the grid and creates the GridNodes
      */
     void initGrid(Vector3f min, Vector3f max);
-
-    /**
-     * Clears all GridNode info except position
-     */
-    void reset();
 
     /**
      * Generates a list of points positions inside the snow mesh. The

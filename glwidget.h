@@ -37,7 +37,7 @@ protected:
 
 private:
     void rebuildMatrices();
-    void initGround();
+    //void initGround();
     void renderPoints();
 
     /** ID for the shader program. */
@@ -50,8 +50,8 @@ private:
     float m_angleX, m_angleY, m_zoom;
     QPoint m_prevMousePos;
 
-    std::unique_ptr<OpenGLShape> m_ground;
-    float m_groundHeight;
+    void initColliders();
+    std::vector<OpenGLShape*> m_colliderShapes;
 
     std::unique_ptr<OpenGLShape> m_grid;
     void initGrid(std::pair<Eigen::Vector3f, Eigen::Vector3f> gridBounds);
