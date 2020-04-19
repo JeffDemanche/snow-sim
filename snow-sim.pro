@@ -60,6 +60,7 @@ SOURCES += main.cpp \
 HEADERS += \
     grid.h \
     gridnode.h \
+    main.h \
     mesh.h \
     mpm.h \
     particle.h \

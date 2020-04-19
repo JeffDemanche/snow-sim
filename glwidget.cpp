@@ -6,8 +6,11 @@
 #include <iostream>
 #include "gl/shaders/ShaderAttribLocations.h"
 #include "collisionobject.h"
+#include "main.h"
 
 #define PI 3.14159265f
+
+using namespace std;
 
 GLWidget::GLWidget(QGLFormat format, QWidget *parent)
     : QGLWidget(format, parent), m_angleX(0), m_angleY(0.5f), m_zoom(10.f)
@@ -15,16 +18,11 @@ GLWidget::GLWidget(QGLFormat format, QWidget *parent)
     m_maxParticles = 2500;
     srand(time(NULL));
 
-    QStringList args = QApplication::arguments();
-    if (args.length() < 2) {
-        cerr << "Error: Wrong number of arguments" << endl;
-    }
-    QString infile = args[1];
-    int numParticles = args[2].toInt();
+    AppArgs args = snowSimParseArgs();
     Mesh m;
-    m.loadFromFile(infile.toStdString());
+    m.loadFromFile(args.infile.toStdString());
 
-    MPM mpm = MPM(m, numParticles);
+    MPM mpm = MPM(m, args.numParticles, args.numFrames, args.stepLength);
     m_MPM = mpm;
 
     // The game loop is implemented using a timer

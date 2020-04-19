@@ -1,3 +1,5 @@
+#include <main.h>
+
 #include <QCoreApplication>
 #include <QApplication>
 #include <QCommandLineParser>
@@ -14,47 +16,56 @@
 using namespace std;
 using namespace std::chrono;
 
-int main(int argc, char *argv[])
-{
-    //QCoreApplication a(argc, argv);
-    QApplication a(argc, argv);
-
-    ////////////////////////////////////////////////////////////////////////////////
+AppArgs snowSimParseArgs() {
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addPositionalArgument("snowmesh", "Mesh file to use as snow");
     parser.addPositionalArgument("numparticles", "Number of particles to create within snowmesh");
+    parser.addPositionalArgument("numframes", "Number of simulation timesteps to calculate");
 
-    QCommandLineOption visualize = QCommandLineOption("viz");
+    QCommandLineOption s({"s", "steplength"}, "Amount of seconds per simulation step", "steplength", "default");
+    parser.addOption(s);
+
+    QCommandLineOption visualize("viz");
     parser.addOption(visualize);
 
-    parser.process(a);
+    parser.process(QApplication::arguments());
 
     const QStringList args = parser.positionalArguments();
-    if(args.size() < 1) {
+    if(args.size() < 3) {
         cerr << "Error: Wrong number of arguments" << endl;
-        a.exit(1);
-        return 1;
+        QApplication::exit(1);
     }
-    QString infile = args[0];
-    int numParticles = args[1].toInt();
 
-    //////////////////////////////////////////////////////////////////////////////
+    float stepLength = parser.value("steplength").toStdString() == "default"
+                        ? 1.0 / 24.0
+                        : parser.value("steplength").toFloat();
 
-//    Mesh m;
-//    m.loadFromFile(infile.toStdString());
-//    MPM mpm = MPM(m, numParticles);
+    return AppArgs{
+        args[0],
+        parser.isSet(visualize),
+        args[1].toInt(),
+        args[2].toInt(),
+        stepLength
+    };
+}
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+
+    AppArgs args = snowSimParseArgs();
 
     // Add --viz to command to run GUI.
-    if (parser.isSet(visualize)) {
+    if (args.vizualize) {
         MainWindow w;
         w.show();
         return a.exec();
     } else {
         Mesh m;
-        m.loadFromFile(infile.toStdString());
-        MPM mpm = MPM(m, numParticles);
-        // TODO: Run simulation loop here
+        m.loadFromFile(args.infile.toStdString());
+        MPM mpm = MPM(m, args.numParticles, args.numFrames, args.stepLength);
+        mpm.runSimulation();
     }
 
     auto t0 = high_resolution_clock::now();

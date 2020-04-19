@@ -1,8 +1,12 @@
 #include "mpm.h"
 
-MPM::MPM(Mesh snowMesh, int numParticles):
+using namespace std;
+
+MPM::MPM(Mesh snowMesh, int numParticles, int numFrames, float stepLength):
     m_snowMesh(snowMesh),
-    m_numParticles(numParticles)
+    m_numParticles(numParticles),
+    m_numFrames(numFrames),
+    m_stepLength(stepLength)
 {
     m_grid = new Grid(snowMesh, numParticles);
     m_particlePositions = m_grid->getPoints();
@@ -10,6 +14,13 @@ MPM::MPM(Mesh snowMesh, int numParticles):
 }
 
 MPM::MPM() {
+
+}
+
+void MPM::runSimulation() {
+    for (int i = 0; i < m_numFrames; i++) {
+        update(m_stepLength);
+    }
 }
 
 std::vector<Vector3f> MPM::update(float seconds) {
