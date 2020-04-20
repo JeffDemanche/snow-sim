@@ -49,7 +49,7 @@ std::vector<Vector3f> MPM::update(float seconds) {
     //m_grid->implicitSolver();
 
     // Step 7
-    m_grid->calculateDeformationGradient();
+    m_grid->calculateDeformationGradient(seconds);
 
     // Step 8
     m_grid->updateParticleVelocities();

@@ -55,7 +55,8 @@ SOURCES += main.cpp \
     gl/datatype/IBO.cpp \
     gl/GLDebug.cpp \
     collisionobject.cpp \
-    ground.cpp
+    ground.cpp \
+    cubecollider.cpp
 
 HEADERS += \
     grid.h \
@@ -377,7 +378,8 @@ HEADERS += \
     gl/datatype/IBO.h \
     gl/GLDebug.h \
     collisionobject.h \
-    ground.h
+    ground.h \
+    cubecollider.h
 
 FORMS += \
     mainwindow.ui

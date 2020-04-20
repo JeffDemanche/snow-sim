@@ -3,6 +3,7 @@
 #include <iostream>
 #include <set>
 #include <math.h>
+#include "cubecollider.h"
 
 // DEFINE PARAMETERS HERE
 const float _particleMass = 0.05;
@@ -23,6 +24,12 @@ Grid::Grid(Mesh snowMesh, size_t numParticles)
     initColliders();
 
     std::cout << "Number of grid nodes: " << m_nodes.size() << std::endl;
+}
+
+Grid::~Grid() {
+    for (int i = 0; i < m_colliders.size(); i++) {
+        delete m_colliders[i];
+    }
 }
 
 void Grid::initColliders() {

@@ -133,8 +133,11 @@ void GLWidget::initColliders() {
     for (int i = 0; i < colliders.size(); i++) {
         std::vector<glm::vec3> data = colliders[i]->drawingData();
         OpenGLShape* shape = new OpenGLShape;
-        shape->setVertexData(&data[0][0], data.size() * 3, VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLES, data.size());
+//        shape->setVertexData(&data[0][0], data.size() * 3, VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLES, data.size());
+//        shape->setAttribute(ShaderAttrib::POSITION, 3, 0, VBOAttribMarker::DATA_TYPE::FLOAT, false);
+        shape->setVertexData(&data[0][0], data.size()* 3, VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLES, data.size() /  2.f);
         shape->setAttribute(ShaderAttrib::POSITION, 3, 0, VBOAttribMarker::DATA_TYPE::FLOAT, false);
+        shape->setAttribute(ShaderAttrib::NORMAL, 3, 3*sizeof(float), VBOAttribMarker::DATA_TYPE::FLOAT, false);
         shape->buildVAO();
         m_colliderShapes.push_back(shape);
     }

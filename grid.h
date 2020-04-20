@@ -13,6 +13,7 @@ class Grid
 {
 public:
     Grid(Mesh snowMesh, size_t numParticles);
+    ~Grid();
 
     vector<Vector3f> getPoints();
     pair<Vector3f, Vector3f> getGridBounds();

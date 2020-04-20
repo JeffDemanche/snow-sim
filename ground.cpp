@@ -26,14 +26,21 @@ float Ground::coefficientOfFriction() {
 
 std::vector<glm::vec3> Ground::drawingData() {
     int numVertices = 6;
-    std::vector<glm::vec3> data(numVertices);
+    std::vector<glm::vec3> data(2*numVertices);
 
-    data[0] = glm::vec3(5, m_groundHeight, 5);
-    data[1] = glm::vec3(5, m_groundHeight, -5);
-    data[2] = glm::vec3(-5, m_groundHeight, 5);
-    data[3] = glm::vec3(-5, m_groundHeight, -5);
+    data[0] = glm::vec3(5, m_groundHeight, 5); // Position
+    data[1] = glm::vec3(0, 1 ,0); // Normal
+    data[2] = glm::vec3(5, m_groundHeight, -5);
+    data[3] = glm::vec3(0, 1 ,0); // Normal
     data[4] = glm::vec3(-5, m_groundHeight, 5);
-    data[5] = glm::vec3(5, m_groundHeight, -5);
+    data[5] = glm::vec3(0, 1 ,0); // Normal
+
+    data[6] = glm::vec3(-5, m_groundHeight, -5);
+    data[7] = glm::vec3(0, 1 ,0); // Normal
+    data[8] = glm::vec3(-5, m_groundHeight, 5);
+    data[9] = glm::vec3(0, 1 ,0); // Normal
+    data[10] = glm::vec3(5, m_groundHeight, -5);
+    data[11] = glm::vec3(0, 1 ,0); // Normal
 
     return data;
 }
