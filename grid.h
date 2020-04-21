@@ -77,7 +77,7 @@ public:
     /**
      * Step 10. Update particle positions.
      */
-    void updateParticlePositions();
+    void updateParticlePositions(float delta_t);
 
     /**
      * Clears all GridNode info except position
@@ -126,9 +126,9 @@ private:
     float weightFunctionN(float x);
     float weightGradientFunctionDelN(float x);
     float weightN(Vector3f particlePos, Vector3f nodePos);
-    float weightGradientDelOmega(Vector3f particlePos, Vector3f nodePos);
+    Vector3f weightGradientDelOmega(Vector3f particlePos, Vector3f nodePos);
 
-    Vector3f velocityGradient(Particle particle);
+    Matrix3f velocityGradient(Particle particle);
 
 };
 

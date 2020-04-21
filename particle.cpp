@@ -34,12 +34,20 @@ Vector3f Particle::getPosition() {
     return m_position;
 }
 
+void Particle::setPosition(Vector3f position) {
+    m_position = position;
+}
+
 float Particle::getMass() {
     return m_mass;
 }
 
 Vector3f Particle::getVelocity() {
     return m_velocity;
+}
+
+void Particle::setVelocity(Vector3f velocity) {
+    m_velocity = velocity;
 }
 
 float Particle::getVolume() {

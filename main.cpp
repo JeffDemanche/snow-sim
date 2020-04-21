@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
 
     AppArgs args = snowSimParseArgs();
 
+    auto t0 = high_resolution_clock::now();
+
     // Add --viz to command to run GUI.
     if (args.vizualize) {
         MainWindow w;
@@ -68,7 +70,6 @@ int main(int argc, char *argv[])
         mpm.runSimulation();
     }
 
-    auto t0 = high_resolution_clock::now();
     auto t1 = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(t1-t0).count();
 

@@ -19,6 +19,7 @@ MPM::MPM() {
 
 void MPM::runSimulation() {
     for (int i = 0; i < m_numFrames; i++) {
+        cout << "Frame: " << i << endl;
         update(m_stepLength);
     }
 }
@@ -57,7 +58,7 @@ std::vector<Vector3f> MPM::update(float seconds) {
     // Step 9
     m_grid->particleCollision();
 
-    m_grid->updateParticlePositions();
+    m_grid->updateParticlePositions(seconds);
 
     // Or other way to send updated positions to GLWidget
     std::vector<Vector3f> newPositions = m_grid->getPoints();

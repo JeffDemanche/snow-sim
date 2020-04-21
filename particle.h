@@ -20,7 +20,9 @@ public:
     void setDeformationGradient(Matrix3f deformation);
 
     Vector3f getPosition();
+    void setPosition(Vector3f position);
     Vector3f getVelocity();
+    void setVelocity(Vector3f velocity);
     float getMass();
     float getVolume();
 
