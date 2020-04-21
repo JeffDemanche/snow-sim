@@ -16,6 +16,9 @@ const float _groundHeight = -2; // Location of the ground plane
 // TODO Make these optional command line arguments
 const float criticalCompression = 2.5E-2;
 const float criticalStretch = 7.5E-3;
+const float _Eo = 1.4 * pow(10, 5); // Initial Young's Modulus
+const float _v = 0.2; // Poisson's ratio
+const float _hardening = 10; // Hardening coefficient
 
 Grid::Grid(Mesh snowMesh, size_t numParticles)
 {
@@ -35,10 +38,16 @@ Grid::~Grid() {
     for (unsigned int i = 0; i < m_colliders.size(); i++) {
         delete m_colliders[i];
     }
+    for (unsigned int i = 0; i < m_nodes.size(); i++) {
+        delete m_nodes[i];
+    }
+    for (unsigned int i = 0; i < m_particles.size(); i++) {
+        delete m_particles[i];
+    }
 }
 
 void Grid::initColliders() {
-    Ground* g = new Ground(-2, 0.6);
+    Ground* g = new Ground(_groundHeight, 0.6);
     m_colliders.push_back(g);
 }
 
@@ -49,7 +58,7 @@ std::vector<CollisionObject *> Grid::getColliders() {
 void Grid::initParticles(vector<Vector3f> points)
 {
     for(Vector3f p : points) {
-        Particle particle = Particle(p, _particleMass, _initParticleVelocity);
+        Particle* particle = new Particle(p, _particleMass, _initParticleVelocity);
         m_particles.push_back(particle);
         m_points.push_back(p);
     }
@@ -95,7 +104,7 @@ void Grid::initGrid(Vector3f min, Vector3f max) {
                 float z = min.z() + m_gridSpacing * d;
                 Vector3f position(x, y, z);
                 Vector3i index(w, h, d);
-                GridNode node = GridNode(position, index);
+                GridNode* node = new GridNode(position, index);
                 m_nodes.push_back(node);
             }
         }
@@ -103,12 +112,12 @@ void Grid::initGrid(Vector3f min, Vector3f max) {
 }
 
 void Grid::reset() {
-    vector<GridNode> newNodes;
+    vector<GridNode*> newNodes;
     // Create new GridNodes with only position
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
-        Vector3f position = m_nodes[i].getPosition();
-        Vector3i index = m_nodes[i].getIndex();
-        GridNode node = GridNode(position, index);
+        Vector3f position = m_nodes[i]->getPosition();
+        Vector3i index = m_nodes[i]->getIndex();
+        GridNode* node = new GridNode(position, index);
         newNodes.push_back(node);
     }
     // Replace old nodes with new nodes
@@ -144,18 +153,18 @@ void Grid::computeGridMass()
 {
     // Step 1. See eq. 3.1 from the masters doc
     for (unsigned int p = 0; p < m_particles.size(); p++) {
-        Vector3f particlePos = m_particles[p].getPosition();
+        Vector3f particlePos = m_particles[p]->getPosition();
 
         // Find any gridNode in range of the particle
         int originIndex = 0;
         int closestIndex = 0;
         // Loop backwards through m_nodes since most mass is at top of grid (IDEA: keep track of biggest y in particles and resize grid height accordingly with each timestep?)
         for (int n = m_nodes.size() - 1; n > -1; n--) {
-            if ((m_nodes[n].getPosition() - particlePos).norm() <= m_gridSpacing) {
+            if ((m_nodes[n]->getPosition() - particlePos).norm() <= m_gridSpacing) {
                 originIndex = n;
                 break;
             } else {
-                if ((m_nodes[n].getPosition() - particlePos).norm() <= (m_nodes[closestIndex].getPosition() - particlePos).norm()) {
+                if ((m_nodes[n]->getPosition() - particlePos).norm() <= (m_nodes[closestIndex]->getPosition() - particlePos).norm()) {
                     closestIndex = n;
                 }
             }
@@ -164,23 +173,23 @@ void Grid::computeGridMass()
             originIndex = closestIndex;
         }
         // Remember the originIndex
-        m_particles[p].closestGridNode(originIndex);
+        m_particles[p]->closestGridNode(originIndex);
 
         // Get indices of neighbors
-        std::vector<int> inRange = getNeighboringGridNodes(m_nodes[originIndex].getIndex(), particlePos);
+        std::vector<int> inRange = getNeighboringGridNodes(m_nodes[originIndex]->getIndex(), particlePos);
 
         // For grid nodes within range
         for (unsigned int n = 0; n < inRange.size(); n++) {
             // Calculate weight
             int nodeIndex = inRange[n];
-            Vector3f gridNodePos = m_nodes[nodeIndex].getPosition();
+            Vector3f gridNodePos = m_nodes[nodeIndex]->getPosition();
 
             // Calculate weight function
             float w = weightN(particlePos, gridNodePos);
 
             // Summation equation
-            float particleContribution = m_particles[p].getMass() * w;
-            m_nodes[nodeIndex].setMass(m_nodes[nodeIndex].getMass() + particleContribution);
+            float particleContribution = m_particles[p]->getMass() * w;
+            m_nodes[nodeIndex]->setMass(m_nodes[nodeIndex]->getMass() + particleContribution);
         }
     }
 }
@@ -231,14 +240,14 @@ Vector3f Grid::weightGradientDelOmega(Vector3f particlePos, Vector3f nodePos) {
     return Vector3f(N_ix, N_iy, N_iz);
 }
 
-Matrix3f Grid::velocityGradient(Particle p) {
+Matrix3f Grid::velocityGradient(Particle* p) {
     // Eq. 3.23, this assumes that whatever the current velocity is at a grid node has been calculated for the next time step.
     // Which should occur in step 4.
 
     // TODO unsure on the shape of this
     Matrix3f velGrad = Matrix3f::Zero();
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
-        velGrad += m_nodes[i].getVelocity() * weightGradientDelOmega(p.getPosition(), m_nodes[i].getPosition()).transpose();
+        velGrad += m_nodes[i]->getVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
     }
     return velGrad;
 }
@@ -259,7 +268,7 @@ std::vector<int> Grid::getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f
             for (int j = j_start; j < j_end; j++) {
                 for (int k = k_start; k < k_end; k++) {
                     int listIndex = i + j * m_gridWidth + (k * m_gridWidth * m_gridHeight);
-                    Vector3f neighborPos = m_nodes[listIndex].getPosition();
+                    Vector3f neighborPos = m_nodes[listIndex]->getPosition();
                     if (fabs(neighborPos.x() - particlePos.x()) <= m_gridSpacing || fabs(neighborPos.y() - particlePos.y()) <= m_gridSpacing || fabs(neighborPos.z() - particlePos.z()) <= m_gridSpacing) {
                         neighbors.insert(listIndex);
                     }
@@ -279,28 +288,28 @@ void Grid::computeGridVelocity()
     // Step 1. See eq. 3.6 from the masters doc (this requires using the calculated mass, so do that first).
     for (unsigned int p = 0; p < m_particles.size(); p++) {
 
-        int originIndex = m_particles[p].closestGridNode();
-        Vector3f particlePos = m_particles[p].getPosition();
+        int originIndex = m_particles[p]->closestGridNode();
+        Vector3f particlePos = m_particles[p]->getPosition();
 
         // Get indices of neighbors
-        std::vector<int> inRange = getNeighboringGridNodes(m_nodes[originIndex].getIndex(), particlePos);
+        std::vector<int> inRange = getNeighboringGridNodes(m_nodes[originIndex]->getIndex(), particlePos);
 
         // For grid nodes within range
         for (unsigned int n = 0; n < inRange.size(); n++) {
             // Calculate weight function
             int nodeIndex = inRange[n];
-            Vector3f gridNodePos = m_nodes[nodeIndex].getPosition();
+            Vector3f gridNodePos = m_nodes[nodeIndex]->getPosition();
 
             // Calculate final weight function
             float w = weightN(particlePos, gridNodePos);
 
             Vector3f particleContribution;
-            if (m_nodes[nodeIndex].getMass() == 0) {
+            if (m_nodes[nodeIndex]->getMass() == 0) {
                 particleContribution = Vector3f(0,0,0);
             } else {
-                particleContribution = m_particles[p].getVelocity() * m_particles[p].getMass() * w / m_nodes[nodeIndex].getMass();
+                particleContribution = m_particles[p]->getVelocity() * m_particles[p]->getMass() * w / m_nodes[nodeIndex]->getMass();
             }
-            m_nodes[nodeIndex].setVelocity(m_nodes[nodeIndex].getVelocity() + particleContribution);
+            m_nodes[nodeIndex]->setVelocity(m_nodes[nodeIndex]->getVelocity() + particleContribution);
         }
     }
 }
@@ -309,37 +318,88 @@ void Grid::computeParticleVolumes()
 {
     // Step 2. See eq. 3.8. I think this only needs to be done once for the whole simulation.
     for (size_t p = 0; p < m_particles.size(); p++) {
-        Particle particle = m_particles[p];
+        Particle* particle = m_particles[p];
 
         float particleDensity = 0;
         for (size_t i = 0; i < m_nodes.size(); i++) {
-            GridNode node = m_nodes[i];
-            particleDensity += particle.getMass() * weightN(particle.getPosition(), node.getPosition()) / pow(m_gridSpacing, 3);
+            GridNode* node = m_nodes[i];
+            particleDensity += particle->getMass() * weightN(particle->getPosition(), node->getPosition()) / pow(m_gridSpacing, 3);
         }
 
-        particle.setVolume(particle.getMass() / particleDensity);
+        particle->setVolume(particle->getMass() / particleDensity);
     }
 }
 
 void Grid::computeGridForces()
 {
-    // TODO Step 3. See eq. 3.9. Do we need to compute the deformation gradient prior to this happening?
+//    // TODO Step 3. See eq. 3.9. Do we need to compute the deformation gradient prior to this happening?
+//    for (int p = 0; p < m_particles.size(); p++) {
+//        int originIndex = m_particles[p]->closestGridNode();
+//        Vector3f particlePos = m_particles[p]->getPosition();
+
+//        // Get indices of neighbors
+//        std::vector<int> inRange = getNeighboringGridNodes(m_nodes[originIndex]->getIndex(), particlePos);
+
+//        // For grid nodes within range
+//        for (int n = 0; n < inRange.size(); n++) {
+//            GridNode* curr = m_nodes[inRange[n]];
+
+//            Matrix3f F_p = m_particles[p]->getPlasticDeformation();
+//            Matrix3f F_e; m_particles[p]->getElasticDeformation();
+//            float J_p = F_p.determinant();
+//            float V_p = J_p * m_particles[p]->getVolume();
+//            Vector3f del_w = weightGradientDelOmega(m_particles[p]->getPosition(), curr->getPosition());
+//            Matrix3f stress = computeStress(F_e, F_p);
+
+//            Vector3f force = V_p * stress * del_w;
+//            curr->setForce(-1 * (curr->getForce() + force));
+//        }
+//    }
+}
+
+Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
+    float Jp = Fp.determinant();
+    float Je = Fe.determinant();
+    float lambda_Fp = lambda(Fp, Jp);
+    float mu_Fp = mu(Fp, Jp);
+    Matrix3f I = Matrix3f::Identity();
+
+    // Compute Re from Fe using polar decomposition
+    JacobiSVD<MatrixXf> svd(Fe, ComputeFullU | ComputeFullV);
+    Matrix3f U = svd.matrixU();
+    Matrix3f V = svd.matrixV();
+    Matrix3f Re = U * V.transpose();
+
+    Matrix3f stress = ((2.f * mu_Fp / Jp) * (Fe - Re) * Fe.transpose()) + ((lambda_Fp / Jp) * (Je - 1.f) * Je * I);
+    return stress;
+}
+
+float Grid::lambda(Matrix3f Fp, float Jp) {
+    float lambda_o = _Eo * _v / (1.f + _v) * (1.f - 2.f*_v);
+    return (lambda_o * exp(_hardening * (1.f - Jp)));
+}
+
+float Grid::mu(Matrix3f Fp, float Jp) {
+    float mu_o = _Eo / 2.f * (1.f + _v);
+    return (mu_o * exp(_hardening * (1.f - Jp)));
 }
 
 void Grid::updateGridVelocities(float delta_t)
 {
-    // TODO: TEST THIS
     // Step 4. See eq. 3.16. This updates velocities using forces we calculated last step.
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
-        GridNode curr = m_nodes[i];
-        Vector3f v_star = curr.getVelocity() + delta_t * (1.f / curr.getMass()) * (curr.getForce() + _gravity * curr.getMass());
-        curr.setNewVelocity(v_star);
+        GridNode* curr = m_nodes[i];
+        Vector3f v_star(0, 0, 0);
+        if (curr->getMass() > 0) {
+            v_star = curr->getVelocity() + delta_t * (1.f / curr->getMass()) * (curr->getForce() + _gravity * curr->getMass());
+        }
+        curr->setNewVelocity(v_star);
     }
 }
 
 void Grid::gridCollision()
 {
-    // TODO: TEST THIS
+    // TODO: FIX THIS. Something wonky is happening here...
     // Step 5. See eq. 3.17.
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
         // Loop through all colliders in the scene
@@ -347,9 +407,9 @@ void Grid::gridCollision()
             CollisionObject* collider = m_colliders[c];
 
             // Check whether gridNode is intersecting with collider
-            if (collider->insideObject(m_nodes[i].getPosition())) {
-                Vector3f v_rel = m_nodes[i].getVelocity() - collider->getVelocity();
-                Vector3f n = collider->normalAt(m_nodes[i].getPosition());
+            if (collider->insideObject(m_nodes[i]->getPosition())) {
+                Vector3f v_rel = m_nodes[i]->getNewVelocity() - collider->getVelocity();
+                Vector3f n = collider->normalAt(m_nodes[i]->getPosition());
                 float u = collider->coefficientOfFriction();
                 float v_n = v_rel.dot(n);
 
@@ -363,7 +423,7 @@ void Grid::gridCollision()
                     }
                 }
                 Vector3f v_prime = v_rel_prime + collider->getVelocity(); // Transform relative velocity back to world coords
-                m_nodes[i].setNewVelocity(v_prime);
+                m_nodes[i]->setNewVelocity(v_prime);
             }
         }
     }
@@ -373,7 +433,7 @@ void Grid::explicitSolver()
 {
     // TODO: Start with this before implicit solver. Just update velocity
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
-        m_nodes[i].setVelocity(m_nodes[i].getNewVelocity());
+        m_nodes[i]->setVelocity(m_nodes[i]->getNewVelocity());
     }
 }
 
@@ -386,9 +446,9 @@ void Grid::calculateDeformationGradient(float delta_t)
 {
     // Step 7. See eq. 3.33 / 3.34
     for (unsigned int p = 0; p < m_particles.size(); p++) {
-        Particle particle = m_particles[p];
-        Matrix3f tempElastic = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle.getElasticDeformation();
-        Matrix3f tempPlastic = particle.getPlasticDeformation();
+        Particle* particle = m_particles[p];
+        Matrix3f tempElastic = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle->getElasticDeformation();
+        Matrix3f tempPlastic = particle->getPlasticDeformation();
 
         // Compute the singular value decomposition.
         JacobiSVD<Matrix3f> svd(tempElastic, ComputeFullU | ComputeFullV);
@@ -398,8 +458,8 @@ void Grid::calculateDeformationGradient(float delta_t)
         Matrix3f sigma = svd.singularValues().asDiagonal();
         sigma = sigma.cwiseMin(1.f - criticalCompression).cwiseMax(1.f + criticalStretch);
         Matrix3f V = svd.matrixV();
-        particle.setElasticDeformation(U * sigma * V.transpose());
-        particle.setPlasticDeformation(particle.getElasticDeformation() * tempPlastic);
+        particle->setElasticDeformation(U * sigma * V.transpose());
+        particle->setPlasticDeformation(particle->getElasticDeformation() * tempPlastic);
     }
 }
 
@@ -410,18 +470,18 @@ void Grid::updateParticleVelocities()
     float alpha = 0.95;
 
     for (unsigned int p = 0; p < m_particles.size(); p++) {
-        Particle particle = m_particles[p];
+        Particle* particle = m_particles[p];
 
         Vector3f v_PIC = Vector3f::Zero();
-        Vector3f v_FLIP = particle.getVelocity();
+        Vector3f v_FLIP = particle->getVelocity();
 
         for (unsigned int i = 0; i < m_nodes.size(); i++) {
-            float weight = weightN(particle.getPosition(), m_nodes[i].getPosition());
-            v_PIC += m_nodes[i].getNewVelocity() * weight;
-            v_FLIP += (m_nodes[i].getNewVelocity() - m_nodes[i].getVelocity()) * weight;
+            float weight = weightN(particle->getPosition(), m_nodes[i]->getPosition());
+            v_PIC += m_nodes[i]->getNewVelocity() * weight;
+            v_FLIP += (m_nodes[i]->getNewVelocity() - m_nodes[i]->getVelocity()) * weight;
         }
 
-        particle.setVelocity((1.f - alpha) * v_PIC + alpha * v_FLIP);
+        particle->setVelocity((1.f - alpha) * v_PIC + alpha * v_FLIP);
     }
 }
 
@@ -433,7 +493,9 @@ void Grid::particleCollision()
 void Grid::updateParticlePositions(float delta_t)
 {
     // Step 10. Eq. 3.36. Simple time step to finish.
+    m_points.clear();
     for (unsigned int p = 0; p < m_particles.size(); p++) {
-        m_particles[p].setPosition(m_particles[p].getPosition() + delta_t * m_particles[p].getVelocity());
+        m_particles[p]->setPosition(m_particles[p]->getPosition() + delta_t * m_particles[p]->getVelocity());
+        m_points.push_back(m_particles[p]->getPosition());
     }
 }

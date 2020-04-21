@@ -4,6 +4,9 @@ GridNode::GridNode(Vector3f position, Vector3i index):
     m_position(position), m_index(index)
 {
     m_mass = 0;
+    m_force = Vector3f(0, 0, 0);
+    m_velocity = Vector3f(0, 0, 0);
+    m_newVelocity = Vector3f(0, 0, 0);
 }
 
 Vector3f GridNode::getPosition() {

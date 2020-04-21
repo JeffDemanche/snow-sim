@@ -85,8 +85,8 @@ public:
     void reset();
 
 private:
-    vector<Particle> m_particles;
-    vector<GridNode> m_nodes;
+    vector<Particle*> m_particles;
+    vector<GridNode*> m_nodes;
     vector<Vector3f> m_points;
     pair<Vector3f, Vector3f> m_gridBounds;
     float m_gridWidth;
@@ -128,7 +128,11 @@ private:
     float weightN(Vector3f particlePos, Vector3f nodePos);
     Vector3f weightGradientDelOmega(Vector3f particlePos, Vector3f nodePos);
 
-    Matrix3f velocityGradient(Particle particle);
+    Matrix3f velocityGradient(Particle* particle);
+
+    Matrix3f computeStress(Matrix3f Fe, Matrix3f Fp);
+    float lambda(Matrix3f Fp, float Jp);
+    float mu(Matrix3f Fp, float Jp);
 
 };
 

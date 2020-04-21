@@ -3,6 +3,9 @@
 Particle::Particle(Vector3f centerPos, float mass, Vector3f velocity):
     m_position(centerPos), m_mass(mass), m_velocity(velocity)
 {
+    m_elasticDeformation = Matrix3f::Identity();
+    m_plasticDeformation = Matrix3f::Identity();
+    m_deformationGradient = Matrix3f::Identity();
 
 }
 
