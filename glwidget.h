@@ -34,6 +34,8 @@ protected:
     void mousePressEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
     void wheelEvent(QWheelEvent *e);
+    void keyPressEvent(QKeyEvent *event);
+    void keyRepeatEvent(QKeyEvent *);
 
 private:
     void rebuildMatrices();
@@ -63,6 +65,8 @@ private:
     MPM m_MPM;
     QTime m_time;
     QTimer m_timer;
+
+    bool m_paused;
 
     int m_maxParticles = 2500;
 

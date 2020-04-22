@@ -16,6 +16,7 @@ GLWidget::GLWidget(QGLFormat format, QWidget *parent)
     : QGLWidget(format, parent), m_angleX(0), m_angleY(0.5f), m_zoom(10.f)
 {
     m_maxParticles = 2500;
+    m_paused = false;
     srand(time(NULL));
 
     AppArgs args = snowSimParseArgs();
@@ -24,6 +25,8 @@ GLWidget::GLWidget(QGLFormat format, QWidget *parent)
 
     MPM mpm = MPM(m, args.numParticles, args.numFrames, args.stepLength);
     m_MPM = mpm;
+
+    setFocusPolicy(Qt::StrongFocus);
 
     // The game loop is implemented using a timer
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -119,6 +122,30 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
     rebuildMatrices();
 }
 
+void GLWidget::keyPressEvent(QKeyEvent *event)
+{
+    // Don't remove this -- helper code for key repeat events
+    if(event->isAutoRepeat()) {
+        keyRepeatEvent(event);
+        return;
+    }
+
+     if (event->key() == Qt::Key_P) {
+
+        if (m_paused) {
+            m_paused = false;
+            std::cout << "Simulation unpaused" << std::endl;
+        } else {
+            m_paused = true;
+            std::cout << "Simulation paused" << std::endl;
+        }
+    }
+}
+
+void GLWidget::keyRepeatEvent(QKeyEvent *)
+{
+}
+
 void GLWidget::rebuildMatrices() {
     m_model = glm::mat4(1.f);
     m_view = glm::translate(glm::vec3(0, 0, -m_zoom)) *
@@ -177,8 +204,8 @@ void GLWidget::initPoints(std::vector<Eigen::Vector3f> positions) {
 
     int numVertices = 3;
     std::vector<glm::vec3> data(numVertices);
-    float halfWidth = 0.01;
-    float halfHeight = 0.01;
+    float halfWidth = 0.02;
+    float halfHeight = 0.02;
 
     for (int i = 0; i < renderablePoints.size(); i++) {
         Eigen::Vector3f point = positions[i];
@@ -266,9 +293,13 @@ void GLWidget::initGrid(std::pair<Eigen::Vector3f, Eigen::Vector3f> gridBounds) 
 
 void GLWidget::tick()
 {
-    float seconds = m_time.restart() * 0.001f;
-    std::vector<Eigen::Vector3f> newPoints = m_MPM.update(seconds);
-    initPoints(newPoints);
+    float seconds = m_time.restart() * 0.0001f;
+    //float seconds = 0.001f;
+    if (!m_paused) {
+        std::vector<Eigen::Vector3f> newPoints = m_MPM.update(seconds);
+        initPoints(newPoints);
+    }
+
     update();
 }
 

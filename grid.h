@@ -122,7 +122,6 @@ private:
      */
     pair<Vector3f, Vector3f> findGridBoundaries(Vector3f bbMin, Vector3f bbMax, float lowestY);
 
-    std::vector<int> getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos);
     float weightFunctionN(float x);
     float weightGradientFunctionDelN(float x);
     float weightN(Vector3f particlePos, Vector3f nodePos);

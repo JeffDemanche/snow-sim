@@ -153,43 +153,18 @@ void Grid::computeGridMass()
 {
     // Step 1. See eq. 3.1 from the masters doc
     for (unsigned int p = 0; p < m_particles.size(); p++) {
+
         Vector3f particlePos = m_particles[p]->getPosition();
 
-        // Find any gridNode in range of the particle
-        int originIndex = 0;
-        int closestIndex = 0;
-        // Loop backwards through m_nodes since most mass is at top of grid (IDEA: keep track of biggest y in particles and resize grid height accordingly with each timestep?)
-        for (int n = m_nodes.size() - 1; n > -1; n--) {
-            if ((m_nodes[n]->getPosition() - particlePos).norm() <= m_gridSpacing) {
-                originIndex = n;
-                break;
-            } else {
-                if ((m_nodes[n]->getPosition() - particlePos).norm() <= (m_nodes[closestIndex]->getPosition() - particlePos).norm()) {
-                    closestIndex = n;
-                }
-            }
-        }
-        if (originIndex == 0) {
-            originIndex = closestIndex;
-        }
-        // Remember the originIndex
-        m_particles[p]->closestGridNode(originIndex);
-
-        // Get indices of neighbors
-        std::vector<int> inRange = getNeighboringGridNodes(m_nodes[originIndex]->getIndex(), particlePos);
-
-        // For grid nodes within range
-        for (unsigned int n = 0; n < inRange.size(); n++) {
-            // Calculate weight
-            int nodeIndex = inRange[n];
-            Vector3f gridNodePos = m_nodes[nodeIndex]->getPosition();
+        for (unsigned int n = 0; n < m_nodes.size(); n++) {
+            Vector3f gridNodePos = m_nodes[n]->getPosition();
 
             // Calculate weight function
             float w = weightN(particlePos, gridNodePos);
 
             // Summation equation
             float particleContribution = m_particles[p]->getMass() * w;
-            m_nodes[nodeIndex]->setMass(m_nodes[nodeIndex]->getMass() + particleContribution);
+            m_nodes[n]->setMass(m_nodes[n]->getMass() + particleContribution);
         }
     }
 }
@@ -252,64 +227,26 @@ Matrix3f Grid::velocityGradient(Particle* p) {
     return velGrad;
 }
 
-std::vector<int> Grid::getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos) {
-    // return list of m_nodes indices of grid nodes within 2*gridSpacing neighborhood of particlePos
-    std::set<int> neighbors;
-
-        int i_start = max(0, gridNodeOrigin(0) - 1);
-        float i_end = fmin(m_gridWidth, gridNodeOrigin(0) + 2);
-        int j_start = max(0, gridNodeOrigin(1) - 1);
-        float j_end = fmin(m_gridHeight, gridNodeOrigin(1) + 2);
-        int k_start = max(0, gridNodeOrigin(2) - 1);
-        float k_end = fmin(m_gridDepth, gridNodeOrigin(2) + 2);
-
-        // Loop through local neighboorhood and search for gridNodes that are within range of the particle
-        for (int i = i_start; i < i_end; i++) {
-            for (int j = j_start; j < j_end; j++) {
-                for (int k = k_start; k < k_end; k++) {
-                    int listIndex = i + j * m_gridWidth + (k * m_gridWidth * m_gridHeight);
-                    Vector3f neighborPos = m_nodes[listIndex]->getPosition();
-                    if (fabs(neighborPos.x() - particlePos.x()) <= m_gridSpacing || fabs(neighborPos.y() - particlePos.y()) <= m_gridSpacing || fabs(neighborPos.z() - particlePos.z()) <= m_gridSpacing) {
-                        neighbors.insert(listIndex);
-                    }
-                }
-            }
-        }
-    // Convert set to list and return
-    std::vector<int> result;
-    for(auto it = neighbors.begin(); it != neighbors.end(); ++it) {
-        result.push_back(*it);
-    }
-    return result;
-}
-
 void Grid::computeGridVelocity()
 {
     // Step 1. See eq. 3.6 from the masters doc (this requires using the calculated mass, so do that first).
     for (unsigned int p = 0; p < m_particles.size(); p++) {
 
-        int originIndex = m_particles[p]->closestGridNode();
         Vector3f particlePos = m_particles[p]->getPosition();
 
-        // Get indices of neighbors
-        std::vector<int> inRange = getNeighboringGridNodes(m_nodes[originIndex]->getIndex(), particlePos);
-
-        // For grid nodes within range
-        for (unsigned int n = 0; n < inRange.size(); n++) {
-            // Calculate weight function
-            int nodeIndex = inRange[n];
-            Vector3f gridNodePos = m_nodes[nodeIndex]->getPosition();
+        for (unsigned int n = 0; n < m_nodes.size(); n++) {
+            Vector3f gridNodePos = m_nodes[n]->getPosition();
 
             // Calculate final weight function
             float w = weightN(particlePos, gridNodePos);
 
             Vector3f particleContribution;
-            if (m_nodes[nodeIndex]->getMass() == 0) {
+            if (m_nodes[n]->getMass() == 0) {
                 particleContribution = Vector3f(0,0,0);
             } else {
-                particleContribution = m_particles[p]->getVelocity() * m_particles[p]->getMass() * w / m_nodes[nodeIndex]->getMass();
+                particleContribution = m_particles[p]->getVelocity() * m_particles[p]->getMass() * w / m_nodes[n]->getMass();
             }
-            m_nodes[nodeIndex]->setVelocity(m_nodes[nodeIndex]->getVelocity() + particleContribution);
+            m_nodes[n]->setVelocity(m_nodes[n]->getVelocity() + particleContribution);
         }
     }
 }
@@ -399,7 +336,6 @@ void Grid::updateGridVelocities(float delta_t)
 
 void Grid::gridCollision()
 {
-    // TODO: FIX THIS. Something wonky is happening here...
     // Step 5. See eq. 3.17.
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
         // Loop through all colliders in the scene
@@ -408,6 +344,9 @@ void Grid::gridCollision()
 
             // Check whether gridNode is intersecting with collider
             if (collider->insideObject(m_nodes[i]->getPosition())) {
+                if (m_nodes[i]->getNewVelocity().norm() > 0) {
+                    //std::cout << "has collided" << std::endl;
+                }
                 Vector3f v_rel = m_nodes[i]->getNewVelocity() - collider->getVelocity();
                 Vector3f n = collider->normalAt(m_nodes[i]->getPosition());
                 float u = collider->coefficientOfFriction();
@@ -487,7 +426,33 @@ void Grid::updateParticleVelocities()
 
 void Grid::particleCollision()
 {
-    // TODO Step 9. See eq. 3.17.
+    // Step 9. See eq. 3.17.
+    for (unsigned int i = 0; i < m_particles.size(); i++) {
+        // Loop through all colliders in the scene
+        for (unsigned int c = 0; c < m_colliders.size(); c++) {
+            CollisionObject* collider = m_colliders[c];
+
+            // Check whether gridNode is intersecting with collider
+            if (collider->insideObject(m_particles[i]->getPosition())) {
+                Vector3f v_rel = m_particles[i]->getVelocity() - collider->getVelocity();
+                Vector3f n = collider->normalAt(m_particles[i]->getPosition());
+                float u = collider->coefficientOfFriction();
+                float v_n = v_rel.dot(n);
+
+                Vector3f v_rel_prime = v_rel;
+                if (v_n < 0) { // Collision only applied if objects are not separating
+                    Vector3f v_t = v_rel - n * v_n;
+                    if (v_t.norm() <= (-u * v_n)) { // If sticking impulse is required
+                        v_rel_prime = Vector3f(0,0,0);
+                    } else { // Otherwise apply dynamic friction
+                        v_rel_prime = v_t + u * v_n * v_t / v_t.norm();
+                    }
+                }
+                Vector3f v_prime = v_rel_prime + collider->getVelocity(); // Transform relative velocity back to world coords
+                m_particles[i]->setVelocity(v_prime);
+            }
+        }
+    }
 }
 
 void Grid::updateParticlePositions(float delta_t)
