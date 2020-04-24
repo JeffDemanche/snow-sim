@@ -119,6 +119,13 @@ void Grid::initGrid(Vector3f min, Vector3f max) {
     }
 }
 
+GridNode* Grid::getNodeAt(int x, int y, int z) {
+    int a = 1;
+    int b = (int) m_gridWidth;
+    int c = ((int) m_gridWidth) * ((int) m_gridHeight);
+    return m_nodes[a * x + b * y + c * z];
+}
+
 void Grid::reset() {
     vector<GridNode*> newNodes;
     // Create new GridNodes with only position
@@ -155,6 +162,13 @@ vector<Vector3f> Grid::getPoints()
 
 pair<Vector3f, Vector3f> Grid::getGridBounds() {
     return m_gridBounds;
+}
+
+Vector3i Grid::getGridResolution() {
+    int x = m_gridWidth;
+    int y = m_gridHeight;
+    int z = m_gridDepth;
+    return Vector3i{x, y, z};
 }
 
 void Grid::computeGridMass()

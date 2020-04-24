@@ -6,6 +6,7 @@
 #include "mesh.h"
 #include "collisionobject.h"
 #include "ground.h"
+#include <unordered_map>
 
 using namespace std;
 
@@ -18,9 +19,13 @@ public:
     vector<Particle*> getParticles();
     vector<GridNode*> getGridNodes();
 
+    Vector3i getGridResolution();
+
     vector<Vector3f> getPoints();
     pair<Vector3f, Vector3f> getGridBounds();
     std::vector<CollisionObject*> getColliders();
+
+    GridNode* getNodeAt(int x, int y, int z);
 
     /**
      * Step 1. Calculates the grid mass values based on particles.
