@@ -46,6 +46,14 @@ Grid::~Grid() {
     }
 }
 
+vector<Particle*> Grid::getParticles() {
+    return m_particles;
+}
+
+vector<GridNode*> Grid::getGridNodes() {
+    return m_nodes;
+}
+
 void Grid::initColliders() {
     Ground* g = new Ground(_groundHeight, 0.6);
     m_colliders.push_back(g);

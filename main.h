@@ -5,6 +5,7 @@
 
 struct AppArgs {
     QString infile;
+    QString outDir;
     bool vizualize;
     int numParticles;
     int numFrames;

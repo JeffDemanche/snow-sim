@@ -23,7 +23,7 @@ GLWidget::GLWidget(QGLFormat format, QWidget *parent)
     Mesh m;
     m.loadFromFile(args.infile.toStdString());
 
-    MPM mpm = MPM(m, args.numParticles, args.numFrames, args.stepLength);
+    MPM mpm = MPM(m, args.outDir, args.numParticles, args.numFrames, args.stepLength);
     m_MPM = mpm;
 
     setFocusPolicy(Qt::StrongFocus);

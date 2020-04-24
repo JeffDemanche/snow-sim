@@ -15,6 +15,9 @@ public:
     Grid(Mesh snowMesh, size_t numParticles);
     ~Grid();
 
+    vector<Particle*> getParticles();
+    vector<GridNode*> getGridNodes();
+
     vector<Vector3f> getPoints();
     pair<Vector3f, Vector3f> getGridBounds();
     std::vector<CollisionObject*> getColliders();

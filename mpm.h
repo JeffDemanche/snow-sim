@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <iostream>
+#include <QString>
 #include "mesh.h"
 #include "grid.h"
 
@@ -11,7 +12,7 @@ using namespace std;
 class MPM
 {
 public:
-    MPM(Mesh snowMesh, int numParticles, int numFrames, float stepLength);
+    MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength);
 
     MPM();
 
@@ -30,7 +31,10 @@ public:
     vector<CollisionObject*> getColliders();
 
 private:
+    void writeFrameToFile(int frameNum);
+
     Mesh m_snowMesh;
+    QString m_outDir;
 
     bool m_firstStep;
     int m_numParticles;

@@ -20,6 +20,7 @@ AppArgs snowSimParseArgs() {
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addPositionalArgument("snowmesh", "Mesh file to use as snow");
+    parser.addPositionalArgument("outdir", "Directory to export volumetric data to");
     parser.addPositionalArgument("numparticles", "Number of particles to create within snowmesh");
     parser.addPositionalArgument("numframes", "Number of simulation timesteps to calculate");
 
@@ -32,7 +33,7 @@ AppArgs snowSimParseArgs() {
     parser.process(QApplication::arguments());
 
     const QStringList args = parser.positionalArguments();
-    if(args.size() < 3) {
+    if(args.size() < 4) {
         cerr << "Error: Wrong number of arguments" << endl;
         QApplication::exit(1);
     }
@@ -43,9 +44,10 @@ AppArgs snowSimParseArgs() {
 
     return AppArgs{
         args[0],
+        args[1],
         parser.isSet(visualize),
-        args[1].toInt(),
         args[2].toInt(),
+        args[3].toInt(),
         stepLength
     };
 }
@@ -66,7 +68,7 @@ int main(int argc, char *argv[])
     } else {
         Mesh m;
         m.loadFromFile(args.infile.toStdString());
-        MPM mpm = MPM(m, args.numParticles, args.numFrames, args.stepLength);
+        MPM mpm = MPM(m, args.outDir, args.numParticles, args.numFrames, args.stepLength);
         mpm.runSimulation();
     }
 

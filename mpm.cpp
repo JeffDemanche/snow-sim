@@ -1,9 +1,12 @@
 #include "mpm.h"
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
-MPM::MPM(Mesh snowMesh, int numParticles, int numFrames, float stepLength):
+MPM::MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength):
     m_snowMesh(snowMesh),
+    m_outDir(outDir),
     m_numParticles(numParticles),
     m_numFrames(numFrames),
     m_stepLength(stepLength)
@@ -21,6 +24,7 @@ void MPM::runSimulation() {
     for (int i = 0; i < m_numFrames; i++) {
         cout << "Frame: " << i << endl;
         update(m_stepLength);
+        writeFrameToFile(i);
     }
 }
 
@@ -68,6 +72,28 @@ std::vector<Vector3f> MPM::update(float seconds) {
     m_grid->reset();
 
     return newPositions;
+}
+
+void MPM::writeFrameToFile(int frameNum) {
+    QString paddedNumber = QString("%4").arg(frameNum, 5, 10, QChar('0'));
+    ofstream particlesFile((m_outDir + "\\particles." + paddedNumber).toUtf8());
+    for (unsigned int p = 0; p < m_grid->getParticles().size(); p++) {
+        Particle part = *m_grid->getParticles()[p];
+        QString position = QString("[%1,%2,%3]").arg(part.getPosition()[0]).arg(part.getPosition()[1]).arg(part.getPosition()[2]);
+        QString volume = QString("%1").arg(part.getVolume());
+        QString mass = QString("%1").arg(part.getMass());
+        particlesFile << "p:" << position.toStdString() << " V:" << volume.toStdString() << " m:" << mass.toStdString() << endl;
+    }
+    particlesFile.close();
+
+    ofstream gridNodesFile((m_outDir + "\\grid." + paddedNumber).toUtf8());
+    for (unsigned int n = 0; n < m_grid->getGridNodes().size(); n++) {
+        GridNode node = *m_grid->getGridNodes()[n];
+        QString index = QString("[%1,%2,%3]").arg(node.getIndex()[0]).arg(node.getIndex()[1]).arg(node.getIndex()[2]);
+        QString mass = QString("%1").arg(node.getMass());
+        gridNodesFile << "i:" << index.toStdString() << " m:" << mass.toStdString() << endl;
+    }
+    gridNodesFile.close();
 }
 
 std::vector<Vector3f> MPM::getPositions() {
