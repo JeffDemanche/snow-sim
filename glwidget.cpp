@@ -16,7 +16,7 @@ GLWidget::GLWidget(QGLFormat format, QWidget *parent)
     : QGLWidget(format, parent), m_angleX(0), m_angleY(0.5f), m_zoom(10.f)
 {
     m_maxParticles = 2500;
-    m_paused = false;
+    m_paused = true;
     srand(time(NULL));
 
     AppArgs args = snowSimParseArgs();
@@ -293,7 +293,7 @@ void GLWidget::initGrid(std::pair<Eigen::Vector3f, Eigen::Vector3f> gridBounds) 
 
 void GLWidget::tick()
 {
-    float seconds = m_time.restart() * 0.0001f;
+    float seconds = m_time.restart() * 0.00001f;
     //float seconds = 0.001f;
     if (!m_paused) {
         std::vector<Eigen::Vector3f> newPoints = m_MPM.update(seconds);
