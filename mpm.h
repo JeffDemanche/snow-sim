@@ -22,7 +22,7 @@ public:
      */
     void runSimulation();
 
-    vector<Eigen::Vector3f> update(float seconds);
+    vector<Eigen::Vector3f> update(float seconds, int currentFrame);
 
     void exportFrame();
 

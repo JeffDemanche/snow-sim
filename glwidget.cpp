@@ -296,7 +296,7 @@ void GLWidget::tick()
     float seconds = m_time.restart() * 0.00001f;
     //float seconds = 0.001f;
     if (!m_paused) {
-        std::vector<Eigen::Vector3f> newPoints = m_MPM.update(seconds);
+        std::vector<Eigen::Vector3f> newPoints = m_MPM.update(seconds, 0);
         initPoints(newPoints);
     }
 

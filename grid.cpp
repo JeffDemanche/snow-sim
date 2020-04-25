@@ -46,6 +46,10 @@ Grid::~Grid() {
     }
 }
 
+void Grid::setCurrentFrame(int currentFrame) {
+    m_currentFrame = currentFrame;
+}
+
 vector<Particle*> Grid::getParticles() {
     return m_particles;
 }
@@ -252,6 +256,7 @@ Matrix3f Grid::velocityGradient(Particle* p) {
 void Grid::computeGridVelocity()
 {
     // Step 1. See eq. 3.6 from the masters doc (this requires using the calculated mass, so do that first).
+    bool nanCheck = false;
     for (unsigned int p = 0; p < m_particles.size(); p++) {
 
         Vector3f particlePos = m_particles[p]->getPosition();
@@ -268,7 +273,11 @@ void Grid::computeGridVelocity()
             } else {
                 particleContribution = m_particles[p]->getVelocity() * m_particles[p]->getMass() * w / m_nodes[n]->getMass();
             }
-            m_nodes[n]->setVelocity(m_nodes[n]->getVelocity() + particleContribution);
+            Vector3f newVelocity = m_nodes[n]->getVelocity() + particleContribution;
+            m_nodes[n]->setVelocity(newVelocity);
+
+            if (isnan(newVelocity.x()) || isnan(newVelocity.y()) || isnan(newVelocity.z()))
+                cerr << "Step 1: GRID VELOCITY IS NAN" << endl;
         }
     }
 }
@@ -291,11 +300,13 @@ void Grid::computeParticleVolumes()
 
 void Grid::computeGridForces()
 {
-//    // TODO Step 3. See eq. 3.9. Do we need to compute the deformation gradient prior to this happening?
-    for (unsigned int p = 0; p < m_particles.size(); p++) {
-        // For grid nodes within range
-        for (unsigned int n = 0; n < m_nodes.size(); n++) {
-            GridNode* curr = m_nodes[n];
+    // Step 3. See eq. 3.9. Do we need to compute the deformation gradient prior to this happening?
+    // For grid nodes within range
+    bool nanCheck = false;
+    for (unsigned int n = 0; n < m_nodes.size(); n++) {
+        GridNode* curr = m_nodes[n];
+        Vector3f sum = Vector3f::Zero();
+        for (unsigned int p = 0; p < m_particles.size(); p++) {
 
             Matrix3f F_p = m_particles[p]->getPlasticDeformation();
             Matrix3f F_e = m_particles[p]->getElasticDeformation();
@@ -305,9 +316,14 @@ void Grid::computeGridForces()
             Matrix3f stress = computeStress(F_e, F_p);
 
             Vector3f force = V_p * stress * del_w;
-            curr->setForce(-1 * (curr->getForce() + force));
+            //curr->setForce(-1 * (curr->getForce() + force));
+            sum += force;
         }
+        nanCheck = (isnan(sum.x()) || isnan(sum.y()) || isnan(sum.z()));
+        curr->setForce(-1 * sum);
     }
+    if (nanCheck)
+        cerr << "Step 3: GRID FORCE IS NAN" << endl;
 }
 
 Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
@@ -342,19 +358,24 @@ float Grid::mu(Matrix3f Fp, float Jp) {
 void Grid::updateGridVelocities(float delta_t)
 {
     // Step 4. See eq. 3.16. This updates velocities using forces we calculated last step.
+    bool nanCheck = false;
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
         GridNode* curr = m_nodes[i];
         Vector3f v_star(0, 0, 0);
         if (curr->getMass() > 0) {
             v_star = curr->getVelocity() + delta_t * (1.f / curr->getMass()) * (curr->getForce() + _gravity * curr->getMass());
         }
+        nanCheck = (isnan(v_star.x()) || isnan(v_star.y()) || isnan(v_star.z()));
         curr->setNewVelocity(v_star);
     }
+    if (nanCheck)
+        cerr << "Step 4: UPDATED GRID VELOCITY IS NAN" << endl;
 }
 
 void Grid::gridCollision()
 {
     // Step 5. See eq. 3.17.
+    bool nanCheck = false;
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
         // Loop through all colliders in the scene
         for (unsigned int c = 0; c < m_colliders.size(); c++) {
@@ -380,10 +401,13 @@ void Grid::gridCollision()
                     }
                 }
                 Vector3f v_prime = v_rel_prime + collider->getVelocity(); // Transform relative velocity back to world coords
+                nanCheck = (isnan(v_prime.x()) || isnan(v_prime.y()) || isnan(v_prime.z()));
                 m_nodes[i]->setNewVelocity(v_prime);
             }
         }
     }
+    if (nanCheck)
+        cerr << "Step 5: UPDATED GRID VELOCITY (AFTER COLILISION) IS NAN" << endl;
 }
 
 void Grid::explicitSolver()
@@ -482,9 +506,13 @@ void Grid::particleCollision()
 void Grid::updateParticlePositions(float delta_t)
 {
     // Step 10. Eq. 3.36. Simple time step to finish.
+    bool nanCheck = false;
     m_points.clear();
     for (unsigned int p = 0; p < m_particles.size(); p++) {
         m_particles[p]->setPosition(m_particles[p]->getPosition() + delta_t * m_particles[p]->getVelocity());
         m_points.push_back(m_particles[p]->getPosition());
+        nanCheck = (isnan(m_particles[p]->getPosition()[0]) || isnan(m_particles[p]->getPosition()[0]) || isnan(m_particles[p]->getPosition()[0]));
     }
+    if (nanCheck)
+        cerr << "Step 10: PARTICLE POSITION IS NAN" << endl;
 }

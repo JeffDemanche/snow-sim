@@ -23,12 +23,14 @@ MPM::MPM() {
 void MPM::runSimulation() {
     for (int i = 0; i < m_numFrames; i++) {
         cout << "Frame: " << i << endl;
-        update(m_stepLength);
+        update(m_stepLength, i);
         writeFrameToFile(i);
     }
 }
 
-std::vector<Vector3f> MPM::update(float seconds) {
+std::vector<Vector3f> MPM::update(float seconds, int currentFrame) {
+
+    m_grid->setCurrentFrame(currentFrame);
 
     // Step 1
     m_grid->computeGridMass();

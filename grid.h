@@ -16,6 +16,8 @@ public:
     Grid(Mesh snowMesh, size_t numParticles);
     ~Grid();
 
+    void setCurrentFrame(int currentFrame);
+
     vector<Particle*> getParticles();
     vector<GridNode*> getGridNodes();
 
@@ -102,6 +104,7 @@ private:
     float m_gridDepth;
     float m_gridSpacing;
     std::vector<CollisionObject*> m_colliders;
+    int m_currentFrame;
 
     /**
      * Initializes all colliding objects in the scene
