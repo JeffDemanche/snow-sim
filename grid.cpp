@@ -9,9 +9,9 @@
 // DEFINE PARAMETERS HERE
 const float _particleMass = 0.05; // No idea what this should be
 const Vector3f _initParticleVelocity(0,0,0);
-const float _gridSpacing = 0.5; // Shouldn't be less than 0.1 (this is in terms of cm)
+const float _gridSpacing = 2; // Shouldn't be less than 0.1 (this is in terms of cm)
 const Vector3f _gravity(0, -1, 0); // Haven't tuned this yet
-const float _groundHeight = -2; // Location of the ground plane
+const float _groundHeight = -8; // Location of the ground plane
 
 // TODO Make these optional command line arguments
 const float criticalCompression = 2.5E-2;
@@ -178,12 +178,10 @@ Vector3i Grid::getGridResolution() {
 void Grid::computeGridMass()
 {
     // Step 1. See eq. 3.1 from the masters doc
-    for (unsigned int p = 0; p < m_particles.size(); p++) {
-
-        Vector3f particlePos = m_particles[p]->getPosition();
-
-        for (unsigned int n = 0; n < m_nodes.size(); n++) {
-            Vector3f gridNodePos = m_nodes[n]->getPosition();
+    for (unsigned int n = 0; n < m_nodes.size(); n++) {
+        Vector3f gridNodePos = m_nodes[n]->getPosition();
+        for (unsigned int p = 0; p < m_particles.size(); p++) {
+            Vector3f particlePos = m_particles[p]->getPosition();
 
             // Calculate weight function
             float w = weightN(particlePos, gridNodePos);
@@ -298,32 +296,43 @@ void Grid::computeParticleVolumes()
     }
 }
 
-void Grid::computeGridForces()
+void Grid::computeGridForces(int thread, int numThreads)
 {
     // Step 3. See eq. 3.9. Do we need to compute the deformation gradient prior to this happening?
     // For grid nodes within range
     bool nanCheck = false;
-    for (unsigned int n = 0; n < m_nodes.size(); n++) {
+    Matrix3f avgStress = Matrix3f::Zero();
+    for (unsigned int n = thread; n < m_nodes.size(); n += numThreads) {
         GridNode* curr = m_nodes[n];
         Vector3f sum = Vector3f::Zero();
         for (unsigned int p = 0; p < m_particles.size(); p++) {
 
             Matrix3f F_p = m_particles[p]->getPlasticDeformation();
+
+            float J_p = F_p.determinant();
             Matrix3f F_e = m_particles[p]->getElasticDeformation();
 
-            float V_p = m_particles[p]->getVolume();
+            float V_p = J_p * m_particles[p]->getVolume();
             Vector3f del_w = weightGradientDelOmega(m_particles[p]->getPosition(), curr->getPosition());
             Matrix3f stress = computeStress(F_e, F_p);
+            avgStress += stress * (1.0 / (m_nodes.size() * m_particles.size()));
 
             Vector3f force = V_p * stress * del_w;
             //curr->setForce(-1 * (curr->getForce() + force));
             sum += force;
         }
         nanCheck = (isnan(sum.x()) || isnan(sum.y()) || isnan(sum.z()));
-        curr->setForce(-1 * sum);
+        Vector3f force = -1 * sum;
+
+        curr->setForce(force);
     }
+    cout << "Average Stress:" << endl << avgStress << endl;
     if (nanCheck)
         cerr << "Step 3: GRID FORCE IS NAN" << endl;
+}
+
+thread Grid::computeGridForcesThread(int t, int numThreads) {
+    return thread(&Grid::computeGridForces, this, t, numThreads);
 }
 
 Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
@@ -332,6 +341,9 @@ Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
     float lambda_Fp = lambda(Fp, Jp);
     float mu_Fp = mu(Fp, Jp);
     Matrix3f I = Matrix3f::Identity();
+
+    assert(!isinf(lambda_Fp));
+    assert(!isinf(mu_Fp));
 
     assert(Fe.determinant() != 0);
 
@@ -346,12 +358,12 @@ Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
 }
 
 float Grid::lambda(Matrix3f Fp, float Jp) {
-    float lambda_o = _Eo * _v / (1.f + _v) * (1.f - 2.f*_v);
+    float lambda_o = _Eo * _v / ((1.f + _v) * (1.f - 2.f*_v));
     return (lambda_o * exp(_hardening * (1.f - Jp)));
 }
 
 float Grid::mu(Matrix3f Fp, float Jp) {
-    float mu_o = _Eo / 2.f * (1.f + _v);
+    float mu_o = _Eo / (2.f * (1.f + _v));
     return (mu_o * exp(_hardening * (1.f - Jp)));
 }
 
@@ -363,8 +375,9 @@ void Grid::updateGridVelocities(float delta_t)
         GridNode* curr = m_nodes[i];
         Vector3f v_star(0, 0, 0);
         if (curr->getMass() > 0) {
-            v_star = curr->getVelocity() + delta_t * (1.f / curr->getMass()) * (curr->getForce() + _gravity * curr->getMass());
+            v_star = curr->getVelocity() + delta_t *  (curr->getForce() + _gravity * curr->getMass());
         }
+
         nanCheck = (isnan(v_star.x()) || isnan(v_star.y()) || isnan(v_star.z()));
         curr->setNewVelocity(v_star);
     }
@@ -425,29 +438,28 @@ void Grid::implicitSolver()
 
 void Grid::calculateDeformationGradient(float delta_t)
 {
-   // Step 7. See eq. 3.33 / 3.34
-   for (unsigned int p = 0; p < m_particles.size(); p++) {
-       Particle* particle = m_particles[p];
-       Matrix3f tempElastic = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle->getElasticDeformation();
-       Matrix3f tempPlastic = particle->getPlasticDeformation();
-       Matrix3f tempF = tempElastic * tempPlastic;
+    // Step 7. See eq. 3.33 / 3.34
+    for (unsigned int p = 0; p < m_particles.size(); p++) {
+        Particle* particle = m_particles[p];
+        Matrix3f tempElastic = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle->getElasticDeformation();
+        Matrix3f tempF = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle->getDeformationGradient();
 
-       // Compute the singular value decomposition.
-       JacobiSVD<Matrix3f> svd(tempElastic, ComputeFullU | ComputeFullV);
-       Matrix3f U = svd.matrixU();
-       Matrix3f V = svd.matrixV();
+        // Compute the singular value decomposition.
+        JacobiSVD<Matrix3f> svd(tempElastic, ComputeFullU | ComputeFullV);
+        Matrix3f U = svd.matrixU();
+        Matrix3f V = svd.matrixV();
 
-       // singularValues() returns an array of the singular values.
-       Vector3f sigma = svd.singularValues();
-       for (int j = 0; j < 3; j++) {   //Clamp Sigma's diagonal values
+        // singularValues() returns an array of the singular values.
+        Vector3f sigma = svd.singularValues();
+        for (int j = 0; j < 3; j++) {   //Clamp Sigma's diagonal values
            sigma[j] = std::min(std::max(sigma[j], 1-criticalCompression), 1+criticalStretch);
-       }
-       // Turn sigma into a matrix
-       Matrix3f matSigma = sigma.asDiagonal();
-       particle->setElasticDeformation(U * matSigma * V.transpose());
-       particle->setPlasticDeformation(particle->getElasticDeformation().inverse() * tempF);
-       particle->setDeformationGradient(tempF);
-   }
+        }
+        // Turn sigma into a matrix
+        Matrix3f matSigma = sigma.asDiagonal();
+        particle->setElasticDeformation(U * matSigma * V.transpose());
+        particle->setPlasticDeformation(V * matSigma.inverse() * U.transpose() * tempF);
+        particle->setDeformationGradient(tempF);
+    }
 }
 
 void Grid::updateParticleVelocities()

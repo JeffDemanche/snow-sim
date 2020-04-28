@@ -13,7 +13,7 @@ using namespace std;
 class MPM
 {
 public:
-    MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength);
+    MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength, bool debugStepTimes = true);
 
     MPM();
 
@@ -34,6 +34,8 @@ public:
 private:
     void writeFrameToFile(int frameNum);
 
+    void doStep(int step, float delta_t, string descipription);
+
     Mesh m_snowMesh;
     QString m_outDir;
 
@@ -42,6 +44,7 @@ private:
     int m_numFrames;
     float m_stepLength;
     float m_timer;
+    bool m_debugStepTimes;
 
     Grid* m_grid;
     vector<Eigen::Vector3f> m_particlePositions;

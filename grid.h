@@ -7,6 +7,7 @@
 #include "collisionobject.h"
 #include "ground.h"
 #include <unordered_map>
+#include <thread>
 
 using namespace std;
 
@@ -47,7 +48,8 @@ public:
     /**
      * Step 3. Calculates forces acting at grid points.
      */
-    void computeGridForces();
+    void computeGridForces(int thread, int numThreads);
+    thread computeGridForcesThread(int thread, int numThreads);
 
     /**
      * Step 4. Calculates updated grid velocities.
