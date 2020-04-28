@@ -7,16 +7,16 @@
 #include <Eigen/SVD>
 
 // DEFINE PARAMETERS HERE
-const float _particleMass = 0.05; // No idea what this should be
+const float _particleMass = 0.4f; // No idea what this should be
 const Vector3f _initParticleVelocity(0,0,0);
-const float _gridSpacing = 2; // Shouldn't be less than 0.1 (this is in terms of cm)
-const Vector3f _gravity(0, -1, 0); // Haven't tuned this yet
-const float _groundHeight = -8; // Location of the ground plane
+const float _gridSpacing = 0.035; // Shouldn't be less than 0.1 (this is in terms of cm)
+const Vector3f _gravity(0, -10, 0); // Haven't tuned this yet
+const float _groundHeight = -0.3; // Location of the ground plane
 
 // TODO Make these optional command line arguments
 const float criticalCompression = 2.5E-2;
 const float criticalStretch = 7.5E-3;
-const float _Eo = 1.4 * pow(10, 3); // Initial Young's Modulus (in terms of cm)
+const float _Eo = 1.4 * pow(10, 5); // Initial Young's Modulus
 const float _v = 0.2; // Poisson's ratio
 const float _hardening = 10; // Hardening coefficient
 
@@ -82,7 +82,7 @@ pair<Vector3f, Vector3f> Grid::findGridBoundaries(Vector3f bbMin, Vector3f bbMax
     float meshHeight = fabs(bbMin.y() - bbMax.y());
 
     float spaceBelowMesh = fabs(bbMin.y() - lowestY);
-    float gridHeight = int((meshHeight + spaceBelowMesh * 2.f) / m_gridSpacing);
+    float gridHeight = int((meshHeight + spaceBelowMesh * 1.5) / m_gridSpacing);
 
     float gridWidth = int((meshWidth * 2.f) / m_gridSpacing); //number of cells across grid should be
     float cellsOnEachSide = (gridWidth - (meshWidth / m_gridSpacing)) / 2.f; //number of cells to add on each side of mesh
@@ -309,15 +309,20 @@ void Grid::computeGridForces(int thread, int numThreads)
 
             Matrix3f F_p = m_particles[p]->getPlasticDeformation();
 
-            float J_p = F_p.determinant();
+            //float J_p = F_p.determinant();
             Matrix3f F_e = m_particles[p]->getElasticDeformation();
 
-            float V_p = J_p * m_particles[p]->getVolume();
+            //float V_p = J_p * m_particles[p]->getVolume()
+            float V_p = m_particles[p]->getVolume();
             Vector3f del_w = weightGradientDelOmega(m_particles[p]->getPosition(), curr->getPosition());
             Matrix3f stress = computeStress(F_e, F_p);
             avgStress += stress * (1.0 / (m_nodes.size() * m_particles.size()));
 
             Vector3f force = V_p * stress * del_w;
+//            if (force.norm() > 0) {
+//                std::cout << force << endl;
+//                cout << "---" << endl;
+//            }
             //curr->setForce(-1 * (curr->getForce() + force));
             sum += force;
         }
@@ -326,7 +331,7 @@ void Grid::computeGridForces(int thread, int numThreads)
 
         curr->setForce(force);
     }
-    cout << "Average Stress:" << endl << avgStress << endl;
+    //cout << "Average Stress:" << endl << avgStress << endl;
     if (nanCheck)
         cerr << "Step 3: GRID FORCE IS NAN" << endl;
 }
@@ -359,12 +364,14 @@ Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
 
 float Grid::lambda(Matrix3f Fp, float Jp) {
     float lambda_o = _Eo * _v / ((1.f + _v) * (1.f - 2.f*_v));
-    return (lambda_o * exp(_hardening * (1.f - Jp)));
+    float result = (lambda_o * exp(_hardening * (1.f - Jp)));
+    return fmin(result, 100.f);
 }
 
 float Grid::mu(Matrix3f Fp, float Jp) {
     float mu_o = _Eo / (2.f * (1.f + _v));
-    return (mu_o * exp(_hardening * (1.f - Jp)));
+    float result = (mu_o * exp(_hardening * (1.f - Jp)));
+    return fmin(result, 100.f);
 }
 
 void Grid::updateGridVelocities(float delta_t)
@@ -375,7 +382,8 @@ void Grid::updateGridVelocities(float delta_t)
         GridNode* curr = m_nodes[i];
         Vector3f v_star(0, 0, 0);
         if (curr->getMass() > 0) {
-            v_star = curr->getVelocity() + delta_t *  (curr->getForce() + _gravity * curr->getMass());
+            //v_star = curr->getVelocity() + delta_t *  (curr->getForce() + _gravity * curr->getMass());
+            v_star = curr->getVelocity() + delta_t * (1.f / curr->getMass()) * (curr->getForce() + _gravity * curr->getMass());
         }
 
         nanCheck = (isnan(v_star.x()) || isnan(v_star.y()) || isnan(v_star.z()));

@@ -142,7 +142,8 @@ void MPM::doStep(int step, float delta_t, string description) {
 
 void MPM::writeFrameToFile(int frameNum) {
     QString paddedNumber = QString("%4").arg(frameNum, 5, 10, QChar('0'));
-    ofstream particlesFile((m_outDir + "\\particles." + paddedNumber).toUtf8());
+    //ofstream particlesFile((m_outDir + "\\particles." + paddedNumber).toUtf8());
+    ofstream particlesFile((m_outDir + "\particles." + paddedNumber).toUtf8());
     for (unsigned int p = 0; p < m_grid->getParticles().size(); p++) {
         Particle part = *m_grid->getParticles()[p];
         QString position = QString("[%1,%2,%3]").arg(part.getPosition()[0]).arg(part.getPosition()[1]).arg(part.getPosition()[2]);
@@ -152,7 +153,8 @@ void MPM::writeFrameToFile(int frameNum) {
     }
     particlesFile.close();
 
-    ofstream gridNodesFile((m_outDir + "\\grid." + paddedNumber).toUtf8());
+    //ofstream gridNodesFile((m_outDir + "\\grid." + paddedNumber).toUtf8());
+    ofstream gridNodesFile((m_outDir + "\grid." + paddedNumber).toUtf8());
     for (unsigned int n = 0; n < m_grid->getGridNodes().size(); n++) {
         GridNode node = *m_grid->getGridNodes()[n];
         QString index = QString("[%1,%2,%3]").arg(node.getIndex()[0]).arg(node.getIndex()[1]).arg(node.getIndex()[2]);
