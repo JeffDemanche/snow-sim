@@ -23,6 +23,7 @@ public:
 
 private:
     float m_mass;
+    float m_cachedMass;
 
     Vector3f m_velocity;
     Vector3f m_newVelocity;

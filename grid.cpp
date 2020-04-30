@@ -10,7 +10,7 @@
 const float _particleMass = 0.4f; // No idea what this should be
 const Vector3f _initParticleVelocity(0,0,0);
 const float _gridSpacing = 0.035; // Shouldn't be less than 0.1 (this is in terms of cm)
-const Vector3f _gravity(0, -10, 0); // Haven't tuned this yet
+const Vector3f _gravity(0, -1, 0); // Haven't tuned this yet
 const float _groundHeight = -0.3; // Location of the ground plane
 
 // TODO Make these optional command line arguments
@@ -365,13 +365,13 @@ Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
 float Grid::lambda(Matrix3f Fp, float Jp) {
     float lambda_o = _Eo * _v / ((1.f + _v) * (1.f - 2.f*_v));
     float result = (lambda_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, 100.f);
+    return fmin(result, 10.f);
 }
 
 float Grid::mu(Matrix3f Fp, float Jp) {
     float mu_o = _Eo / (2.f * (1.f + _v));
     float result = (mu_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, 100.f);
+    return fmin(result, 10.f);
 }
 
 void Grid::updateGridVelocities(float delta_t)
