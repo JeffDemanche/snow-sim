@@ -96,6 +96,10 @@ public:
      */
     void reset();
 
+    void debugGridNodes(int num, int afterStep);
+
+    void debugParticles(int num, int afterStep);
+
 private:
     vector<Particle*> m_particles;
     vector<GridNode*> m_nodes;

@@ -69,3 +69,19 @@ void Particle::closestGridNode(int i) {
 int Particle::closestGridNode() {
     return m_closestGridNode;
 }
+
+void Particle::debug() {
+    std::cout << "\t\t\t   Position: " << m_position.transpose() << std::endl;
+    std::cout << "\t\t\t       Mass: " << m_mass << std::endl;
+    std::cout << "\t\t\t     Volume: " << m_volume << std::endl;
+    std::cout << "\t\t\t   Velocity: " << m_velocity.transpose() << std::endl;
+    std::cout << "\t\t\tDeformation: " << m_deformationGradient.row(0) << std::endl;
+    std::cout << "\t\t\t             " << m_deformationGradient.row(1) << std::endl;
+    std::cout << "\t\t\t             " << m_deformationGradient.row(2) << std::endl;
+    std::cout << "\t\t\t    Elastic: " << m_elasticDeformation.row(0) << std::endl;
+    std::cout << "\t\t\t             " << m_elasticDeformation.row(1) << std::endl;
+    std::cout << "\t\t\t             " << m_elasticDeformation.row(2) << std::endl;
+    std::cout << "\t\t\t    Plastic: " << m_plasticDeformation.row(0) << std::endl;
+    std::cout << "\t\t\t             " << m_plasticDeformation.row(1) << std::endl;
+    std::cout << "\t\t\t             " << m_plasticDeformation.row(2) << std::endl;
+}

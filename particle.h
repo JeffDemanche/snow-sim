@@ -2,6 +2,7 @@
 #define PARTICLE_H
 
 #include <Eigen/StdVector>
+#include <iostream>
 
 using namespace Eigen;
 
@@ -30,6 +31,8 @@ public:
 
     void closestGridNode(int i);
     int closestGridNode();
+
+    void debug();
 
 private:
     Matrix3f m_elasticDeformation;

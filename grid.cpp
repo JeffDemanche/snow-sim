@@ -11,7 +11,7 @@ const float _targetDensity = 400.f;
 const Vector3f _initParticleVelocity(0,0,0);
 const float _gridSpacing = 0.035; // Shouldn't be less than 0.001 (in meters)
 const Vector3f _gravity(0, -10, 0); // Should be -10 for Earth gravity
-const float _groundHeight = -0.25; // Location of the ground plane (in meters)
+const float _groundHeight = -3; // Location of the ground plane (in meters)
 
 // TODO Make these optional command line arguments
 const float criticalCompression = 2.5E-2;
@@ -403,31 +403,31 @@ void Grid::gridCollision()
     bool nanCheck = false;
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
         if (m_nodes[i]->getMass() > 0) {
-        // Loop through all colliders in the scene
-        for (unsigned int c = 0; c < m_colliders.size(); c++) {
-            CollisionObject* collider = m_colliders[c];
+            // Loop through all colliders in the scene
+            for (unsigned int c = 0; c < m_colliders.size(); c++) {
+                CollisionObject* collider = m_colliders[c];
 
-            // Check whether gridNode is intersecting with collider
-            if (collider->insideObject(m_nodes[i]->getPosition())) {
-                Vector3f v_rel = m_nodes[i]->getNewVelocity() - collider->getVelocity();
-                Vector3f n = collider->normalAt(m_nodes[i]->getPosition());
-                float u = collider->coefficientOfFriction();
-                float v_n = v_rel.dot(n);
+                // Check whether gridNode is intersecting with collider
+                if (collider->insideObject(m_nodes[i]->getPosition())) {
+                    Vector3f v_rel = m_nodes[i]->getNewVelocity() - collider->getVelocity();
+                    Vector3f n = collider->normalAt(m_nodes[i]->getPosition());
+                    float u = collider->coefficientOfFriction();
+                    float v_n = v_rel.dot(n);
 
-                Vector3f v_rel_prime = v_rel;
-                if (v_n < 0) { // Collision only applied if objects are not separating
-                    Vector3f v_t = v_rel - n * v_n;
-                    if (v_t.norm() <= (-u * v_n)) { // If sticking impulse is required
-                        v_rel_prime = Vector3f(0,0,0);
-                    } else { // Otherwise apply dynamic friction
-                        v_rel_prime = v_t + u * v_n * v_t / v_t.norm();
+                    Vector3f v_rel_prime = v_rel;
+                    if (v_n < 0) { // Collision only applied if objects are not separating
+                        Vector3f v_t = v_rel - n * v_n;
+                        if (v_t.norm() <= (-u * v_n)) { // If sticking impulse is required
+                            v_rel_prime = Vector3f(0,0,0);
+                        } else { // Otherwise apply dynamic friction
+                            v_rel_prime = v_t + u * v_n * v_t / v_t.norm();
+                        }
                     }
+                    Vector3f v_prime = v_rel_prime + collider->getVelocity(); // Transform relative velocity back to world coords
+                    nanCheck = (isnan(v_prime.x()) || isnan(v_prime.y()) || isnan(v_prime.z()));
+                    m_nodes[i]->setNewVelocity(v_prime);
                 }
-                Vector3f v_prime = v_rel_prime + collider->getVelocity(); // Transform relative velocity back to world coords
-                nanCheck = (isnan(v_prime.x()) || isnan(v_prime.y()) || isnan(v_prime.z()));
-                m_nodes[i]->setNewVelocity(v_prime);
             }
-        }
         }
     }
     if (nanCheck)
@@ -554,4 +554,20 @@ bool Grid::outOfBounds(Particle* p) {
         }
     }
     return out;
+}
+
+void Grid::debugGridNodes(int num, int afterStep) {
+    for (int i = 0; i < num; i++) {
+        int index = ((i + 1.f) / (num + 1)) * (1.f * m_nodes.size());
+        cout << "\t\tDebug for grid node " << index << " after step  " << afterStep << ":" << endl;
+        m_nodes[index]->debug();
+    }
+}
+
+void Grid::debugParticles(int num, int afterStep) {
+    for (int i = 0; i < num; i++) {
+        int index = (int) ((i + 1.f) / (num + 1)) * (1.f * m_particles.size());
+        cout << "\t\tDebug for particle " << index << " after step " << afterStep << ":" << endl;
+        m_particles[index]->debug();
+    }
 }

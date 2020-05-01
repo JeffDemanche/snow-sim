@@ -8,13 +8,15 @@
 using namespace std;
 using namespace std::chrono;
 
-MPM::MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength, bool debugStepTimes):
+MPM::MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength, bool debugStepTimes, int debugGridNodes, int debugParticles):
     m_snowMesh(snowMesh),
     m_outDir(outDir),
     m_numParticles(numParticles),
     m_numFrames(numFrames),
     m_stepLength(stepLength),
-    m_debugStepTimes(debugStepTimes)
+    m_debugStepTimes(debugStepTimes),
+    m_debugGridNodes(debugGridNodes),
+    m_debugParticles(debugParticles)
 {
     m_grid = new Grid(snowMesh, numParticles);
     m_particlePositions = m_grid->getPoints();
@@ -101,9 +103,11 @@ void MPM::doStep(int step, float delta_t, string description) {
     case 1:
         m_grid->computeGridMass();
         m_grid->computeGridVelocity();
+        m_grid->debugGridNodes(m_debugGridNodes, 1);
         break;
     case 2:
         m_grid->computeParticleVolumes();
+        m_grid->debugParticles(m_debugParticles, 2);
         break;
     case 3: {
         thread t[8];
@@ -113,28 +117,36 @@ void MPM::doStep(int step, float delta_t, string description) {
         for (unsigned int i = 0; i < 8; i++) {
             t[i].join();
         }
+        m_grid->debugGridNodes(m_debugGridNodes, 3);
         break;
     }
     case 4:
         m_grid->updateGridVelocities(delta_t);
+        m_grid->debugGridNodes(m_debugGridNodes, 4);
         break;
     case 5:
         m_grid->gridCollision();
+        m_grid->debugGridNodes(m_debugGridNodes, 5);
         break;
     case 6:
         m_grid->explicitSolver();
+        m_grid->debugGridNodes(m_debugGridNodes, 6);
         break;
     case 7:
         m_grid->calculateDeformationGradient(delta_t);
+        m_grid->debugParticles(m_debugParticles, 7);
         break;
     case 8:
         m_grid->updateParticleVelocities();
+        m_grid->debugParticles(m_debugParticles, 8);
         break;
     case 9:
         m_grid->particleCollision();
+        m_grid->debugParticles(m_debugParticles, 9);
         break;
     case 10:
         m_grid->updateParticlePositions(delta_t);
+        m_grid->debugParticles(m_debugParticles, 10);
         break;
     }
 
@@ -184,3 +196,4 @@ std::vector<CollisionObject*> MPM::getColliders() {
 float MPM::randomNumber(float Min, float Max) {
     return ((float(rand()) / float(RAND_MAX)) * (Max - Min)) + Min;
 }
+

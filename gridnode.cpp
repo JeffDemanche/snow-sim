@@ -48,3 +48,12 @@ Vector3f GridNode::getForce() {
 void GridNode::setForce(Vector3f force) {
     m_force = force;
 }
+
+void GridNode::debug() {
+    std::cout << "\t\t\t       Index: " << m_index.transpose() << std::endl;
+    std::cout << "\t\t\t    Position: " << m_position.transpose() << std::endl;
+    std::cout << "\t\t\t        Mass: " << m_mass << std::endl;
+    std::cout << "\t\t\t    Velocity: " << m_velocity.transpose() << std::endl;
+    std::cout << "\t\t\tNew Velocity: " << m_newVelocity.transpose() << std::endl;
+    std::cout << "\t\t\t       Force: " << m_force.transpose() << std::endl;
+}

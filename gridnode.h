@@ -2,6 +2,7 @@
 #define GRIDNODE_H
 
 #include <Eigen/StdVector>
+#include <iostream>
 
 using namespace Eigen;
 
@@ -20,6 +21,8 @@ public:
     Vector3f getNewVelocity();
     Vector3f getForce();
     void setForce(Vector3f force);
+
+    void debug();
 
 private:
     float m_mass;
