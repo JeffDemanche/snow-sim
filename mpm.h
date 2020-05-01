@@ -13,7 +13,7 @@ using namespace std;
 class MPM
 {
 public:
-    MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength, bool debugStepTimes = true, int debugGridNodes = 4, int debugParticles = 4);
+    MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength, bool debugStepTimes = true, int debugParticles = 1);
 
     MPM();
 
@@ -45,7 +45,6 @@ private:
     float m_stepLength;
     float m_timer;
     bool m_debugStepTimes;
-    int m_debugGridNodes;
     int m_debugParticles;
 
     Grid* m_grid;

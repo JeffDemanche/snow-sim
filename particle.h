@@ -9,9 +9,11 @@ using namespace Eigen;
 class Particle
 {
 public:
-    Particle(Vector3f centerPos, float mass, Vector3f velocity);
+    Particle(Vector3f centerPos, int index, float mass, Vector3f velocity);
 
     void updatePosition(float timeStep);
+
+    int getIndex();
 
     Matrix3f getElasticDeformation();
     void setElasticDeformation(Matrix3f elastic);
@@ -35,6 +37,8 @@ public:
     void debug();
 
 private:
+    int m_index;
+
     Matrix3f m_elasticDeformation;
     Matrix3f m_plasticDeformation;
 

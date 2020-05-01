@@ -22,13 +22,12 @@ public:
     vector<Particle*> getParticles();
     vector<GridNode*> getGridNodes();
 
-    Vector3i getGridResolution();
-
     vector<Vector3f> getPoints();
     pair<Vector3f, Vector3f> getGridBounds();
     std::vector<CollisionObject*> getColliders();
 
     GridNode* getNodeAt(int x, int y, int z);
+    int getNodeIndexAt(int x, int y, int z);
 
     /**
      * Step 1. Calculates the grid mass values based on particles.
@@ -151,6 +150,11 @@ private:
     float lambda(Matrix3f Fp, float Jp);
     float mu(Matrix3f Fp, float Jp);
     bool outOfBounds(Particle* p);
+
+    int closestGridNode(Particle* particle);
+
+    void debug(string label, MatrixXf m);
+    void debug(string label, float m);
 
 };
 

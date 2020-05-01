@@ -8,14 +8,13 @@
 using namespace std;
 using namespace std::chrono;
 
-MPM::MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength, bool debugStepTimes, int debugGridNodes, int debugParticles):
+MPM::MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength, bool debugStepTimes, int debugParticles):
     m_snowMesh(snowMesh),
     m_outDir(outDir),
     m_numParticles(numParticles),
     m_numFrames(numFrames),
     m_stepLength(stepLength),
     m_debugStepTimes(debugStepTimes),
-    m_debugGridNodes(debugGridNodes),
     m_debugParticles(debugParticles)
 {
     m_grid = new Grid(snowMesh, numParticles);
@@ -98,12 +97,16 @@ std::vector<Vector3f> MPM::update(float seconds, int currentFrame) {
 void MPM::doStep(int step, float delta_t, string description) {
     auto t0 = high_resolution_clock::now();
 
+    if (m_debugParticles > 0) {
+        cout << "\tStep " << step << " begin:" << endl;
+    }
+
     assert(step >= 1 && step <= 10);
     switch(step) {
     case 1:
         m_grid->computeGridMass();
         m_grid->computeGridVelocity();
-        m_grid->debugGridNodes(m_debugGridNodes, 1);
+        m_grid->debugGridNodes(m_debugParticles, 1);
         break;
     case 2:
         m_grid->computeParticleVolumes();
@@ -117,20 +120,20 @@ void MPM::doStep(int step, float delta_t, string description) {
         for (unsigned int i = 0; i < 8; i++) {
             t[i].join();
         }
-        m_grid->debugGridNodes(m_debugGridNodes, 3);
+        m_grid->debugGridNodes(m_debugParticles, 3);
         break;
     }
     case 4:
         m_grid->updateGridVelocities(delta_t);
-        m_grid->debugGridNodes(m_debugGridNodes, 4);
+        m_grid->debugGridNodes(m_debugParticles, 4);
         break;
     case 5:
         m_grid->gridCollision();
-        m_grid->debugGridNodes(m_debugGridNodes, 5);
+        m_grid->debugGridNodes(m_debugParticles, 5);
         break;
     case 6:
         m_grid->explicitSolver();
-        m_grid->debugGridNodes(m_debugGridNodes, 6);
+        m_grid->debugGridNodes(m_debugParticles, 6);
         break;
     case 7:
         m_grid->calculateDeformationGradient(delta_t);

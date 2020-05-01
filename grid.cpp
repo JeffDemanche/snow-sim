@@ -10,8 +10,8 @@
 const float _targetDensity = 400.f;
 const Vector3f _initParticleVelocity(0,0,0);
 const float _gridSpacing = 0.035; // Shouldn't be less than 0.001 (in meters)
-const Vector3f _gravity(0, -10, 0); // Should be -10 for Earth gravity
-const float _groundHeight = -3; // Location of the ground plane (in meters)
+const Vector3f _gravity(0, -1, 0); // Should be -10 for Earth gravity
+const float _groundHeight = -1; // Location of the ground plane (in meters)
 
 // TODO Make these optional command line arguments
 const float criticalCompression = 2.5E-2;
@@ -71,8 +71,9 @@ std::vector<CollisionObject *> Grid::getColliders() {
 
 void Grid::initParticles(vector<Vector3f> points)
 {
-    for(Vector3f p : points) {
-        Particle* particle = new Particle(p, m_particleMass, _initParticleVelocity);
+    for(int i = 0; i < points.size(); i++) {
+        Vector3f p = points[i];
+        Particle* particle = new Particle(p, i, m_particleMass, _initParticleVelocity);
         m_particles.push_back(particle);
         m_points.push_back(p);
     }
@@ -126,10 +127,14 @@ void Grid::initGrid(Vector3f min, Vector3f max) {
 }
 
 GridNode* Grid::getNodeAt(int x, int y, int z) {
+    return m_nodes[getNodeIndexAt(x, y, z)];
+}
+
+int Grid::getNodeIndexAt(int x, int y, int z) {
     int a = 1;
     int b = (int) m_gridWidth;
     int c = ((int) m_gridWidth) * ((int) m_gridHeight);
-    return m_nodes[a * x + b * y + c * z];
+    return a * x + b * y + c * z;
 }
 
 void Grid::reset() {
@@ -168,13 +173,6 @@ vector<Vector3f> Grid::getPoints()
 
 pair<Vector3f, Vector3f> Grid::getGridBounds() {
     return m_gridBounds;
-}
-
-Vector3i Grid::getGridResolution() {
-    int x = m_gridWidth;
-    int y = m_gridHeight;
-    int z = m_gridDepth;
-    return Vector3i{x, y, z};
 }
 
 void Grid::computeGridMass()
@@ -229,9 +227,9 @@ float Grid::weightN(Vector3f particlePos, Vector3f gridNodePos) {
 }
 
 Vector3f Grid::weightGradientDelOmega(Vector3f particlePos, Vector3f nodePos) {
-    float x_dist = particlePos.x() - nodePos.x();
-    float y_dist = particlePos.y() - nodePos.y();
-    float z_dist = particlePos.z() - nodePos.z();
+    float x_dist = 1.f / m_gridSpacing * (particlePos.x() - nodePos.x());
+    float y_dist = 1.f / m_gridSpacing * (particlePos.y() - nodePos.y());
+    float z_dist = 1.f / m_gridSpacing * (particlePos.z() - nodePos.z());
 
     // Eq 3.4
     float N_ix = weightGradientFunctionDelN(x_dist) * weightFunctionN(y_dist) * weightFunctionN(z_dist);
@@ -247,9 +245,12 @@ Matrix3f Grid::velocityGradient(Particle* p) {
 
     // TODO unsure on the shape of this
     Matrix3f velGrad = Matrix3f::Zero();
+
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
         velGrad += m_nodes[i]->getNewVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
     }
+    if (p->getIndex() == 1000)
+        debug("vel grad: ", velGrad);
     return velGrad;
 }
 
@@ -321,16 +322,11 @@ void Grid::computeGridForces(int thread, int numThreads)
             avgStress += stress * (1.0 / (m_nodes.size() * m_particles.size()));
 
             Vector3f force = V_p * stress * del_w;
-            //curr->setForce(-1 * (curr->getForce() + force));
             sum += force;
         }
         nanCheck = (isnan(sum.x()) || isnan(sum.y()) || isnan(sum.z()));
         Vector3f force = -1 * sum;
 
-//        if (force.norm() > 0) {
-//            cout << force << endl;
-//            cout << "---" << endl;
-//        }
         curr->setForce(force);
     }
     //cout << "Average Stress:" << endl << avgStress << endl;
@@ -556,18 +552,42 @@ bool Grid::outOfBounds(Particle* p) {
     return out;
 }
 
+int Grid::closestGridNode(Particle* particle) {
+    float max_weight = 0.f;
+    int max_index = 0;
+    for (unsigned int i = 0; i < m_nodes.size(); i++) {
+        float weight = weightN(particle->getPosition(), m_nodes[i]->getPosition());
+        if (weight > max_weight) {
+            max_weight = weight;
+            max_index = i;
+        }
+    }
+    return max_index;
+}
+
 void Grid::debugGridNodes(int num, int afterStep) {
     for (int i = 0; i < num; i++) {
-        int index = ((i + 1.f) / (num + 1)) * (1.f * m_nodes.size());
-        cout << "\t\tDebug for grid node " << index << " after step  " << afterStep << ":" << endl;
-        m_nodes[index]->debug();
+        int p_index = ((i + 1.f) / (num + 1)) * (1.f * m_particles.size());
+        int g_index = closestGridNode(m_particles[p_index]);
+        cout << "\t\tDebug for grid node " << g_index << " (closest to particle " << p_index << ") after step  " << afterStep << ":" << endl;
+        m_nodes[g_index]->debug();
     }
 }
 
 void Grid::debugParticles(int num, int afterStep) {
     for (int i = 0; i < num; i++) {
-        int index = (int) ((i + 1.f) / (num + 1)) * (1.f * m_particles.size());
+        int index = ((i + 1.f) / (num + 1)) * (1.f * m_particles.size());
         cout << "\t\tDebug for particle " << index << " after step " << afterStep << ":" << endl;
         m_particles[index]->debug();
     }
+}
+
+void Grid::debug(string label, MatrixXf m) {
+    cout << label << endl;
+    cout << m << endl << endl;
+}
+
+void Grid::debug(string label, float m) {
+    cout << label << endl;
+    cout << m << endl << endl;
 }
