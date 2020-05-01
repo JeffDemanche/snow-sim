@@ -23,7 +23,7 @@ GLWidget::GLWidget(QGLFormat format, QWidget *parent)
     Mesh m;
     m.loadFromFile(args.infile.toStdString());
 
-    MPM mpm = MPM(m, args.outDir, args.numParticles, args.numFrames, args.stepLength);
+    MPM mpm = MPM(m, args.outDir, args.numParticles, args.numFrames, args.stepLength, false);
     m_MPM = mpm;
 
     setFocusPolicy(Qt::StrongFocus);
@@ -204,8 +204,8 @@ void GLWidget::initPoints(std::vector<Eigen::Vector3f> positions) {
 
     int numVertices = 3;
     std::vector<glm::vec3> data(numVertices);
-    float halfWidth = 0.02;
-    float halfHeight = 0.02;
+    float halfWidth = 0.002;
+    float halfHeight = 0.002;
 
     for (int i = 0; i < renderablePoints.size(); i++) {
         Eigen::Vector3f point = positions[i];

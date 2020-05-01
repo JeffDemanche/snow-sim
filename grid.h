@@ -107,6 +107,7 @@ private:
     float m_gridSpacing;
     std::vector<CollisionObject*> m_colliders;
     int m_currentFrame;
+    float m_particleMass;
 
     /**
      * Initializes all colliding objects in the scene
@@ -145,6 +146,7 @@ private:
     Matrix3f computeStress(Matrix3f Fe, Matrix3f Fp);
     float lambda(Matrix3f Fp, float Jp);
     float mu(Matrix3f Fp, float Jp);
+    bool outOfBounds(Particle* p);
 
 };
 

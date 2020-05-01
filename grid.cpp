@@ -7,16 +7,16 @@
 #include <Eigen/SVD>
 
 // DEFINE PARAMETERS HERE
-const float _particleMass = 0.4f; // No idea what this should be
+const float _targetDensity = 400.f;
 const Vector3f _initParticleVelocity(0,0,0);
-const float _gridSpacing = 0.035; // Shouldn't be less than 0.1 (this is in terms of cm)
-const Vector3f _gravity(0, -1, 0); // Haven't tuned this yet
-const float _groundHeight = -0.3; // Location of the ground plane
+const float _gridSpacing = 0.035; // Shouldn't be less than 0.001 (in meters)
+const Vector3f _gravity(0, -10, 0); // Should be -10 for Earth gravity
+const float _groundHeight = -0.25; // Location of the ground plane (in meters)
 
 // TODO Make these optional command line arguments
 const float criticalCompression = 2.5E-2;
 const float criticalStretch = 7.5E-3;
-const float _Eo = 1.4 * pow(10, 5); // Initial Young's Modulus
+const float _Eo = 1.4E5; // Initial Young's Modulus
 const float _v = 0.2; // Poisson's ratio
 const float _hardening = 10; // Hardening coefficient
 
@@ -25,12 +25,14 @@ Grid::Grid(Mesh snowMesh, size_t numParticles)
     m_gridSpacing = _gridSpacing;
     snowMesh.buildBoundingBox();
     vector<Vector3f> points = pointsFromMesh(snowMesh, numParticles);
+    m_particleMass = _targetDensity / points.size();
     initParticles(points);
     pair<Vector3f, Vector3f> boundingPoints = snowMesh.boundingBoxCorners();
     pair<Vector3f, Vector3f> gridBounds = findGridBoundaries(boundingPoints.first, boundingPoints.second, _groundHeight);
     initGrid(gridBounds.first, gridBounds.second);
     initColliders();
 
+    std::cout << "Number of particles: " << m_particles.size() << std::endl;
     std::cout << "Number of grid nodes: " << m_nodes.size() << std::endl;
 }
 
@@ -70,7 +72,7 @@ std::vector<CollisionObject *> Grid::getColliders() {
 void Grid::initParticles(vector<Vector3f> points)
 {
     for(Vector3f p : points) {
-        Particle* particle = new Particle(p, _particleMass, _initParticleVelocity);
+        Particle* particle = new Particle(p, m_particleMass, _initParticleVelocity);
         m_particles.push_back(particle);
         m_points.push_back(p);
     }
@@ -246,7 +248,7 @@ Matrix3f Grid::velocityGradient(Particle* p) {
     // TODO unsure on the shape of this
     Matrix3f velGrad = Matrix3f::Zero();
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
-        velGrad += m_nodes[i]->getVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
+        velGrad += m_nodes[i]->getNewVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
     }
     return velGrad;
 }
@@ -319,16 +321,16 @@ void Grid::computeGridForces(int thread, int numThreads)
             avgStress += stress * (1.0 / (m_nodes.size() * m_particles.size()));
 
             Vector3f force = V_p * stress * del_w;
-//            if (force.norm() > 0) {
-//                std::cout << force << endl;
-//                cout << "---" << endl;
-//            }
             //curr->setForce(-1 * (curr->getForce() + force));
             sum += force;
         }
         nanCheck = (isnan(sum.x()) || isnan(sum.y()) || isnan(sum.z()));
         Vector3f force = -1 * sum;
 
+//        if (force.norm() > 0) {
+//            cout << force << endl;
+//            cout << "---" << endl;
+//        }
         curr->setForce(force);
     }
     //cout << "Average Stress:" << endl << avgStress << endl;
@@ -365,13 +367,13 @@ Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
 float Grid::lambda(Matrix3f Fp, float Jp) {
     float lambda_o = _Eo * _v / ((1.f + _v) * (1.f - 2.f*_v));
     float result = (lambda_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, 10.f);
+    return fmin(result, lambda_o);
 }
 
 float Grid::mu(Matrix3f Fp, float Jp) {
     float mu_o = _Eo / (2.f * (1.f + _v));
     float result = (mu_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, 10.f);
+    return fmin(result, mu_o);
 }
 
 void Grid::updateGridVelocities(float delta_t)
@@ -384,6 +386,8 @@ void Grid::updateGridVelocities(float delta_t)
         if (curr->getMass() > 0) {
             //v_star = curr->getVelocity() + delta_t *  (curr->getForce() + _gravity * curr->getMass());
             v_star = curr->getVelocity() + delta_t * (1.f / curr->getMass()) * (curr->getForce() + _gravity * curr->getMass());
+//            cout << v_star << endl;
+//            cout << "---" << endl;
         }
 
         nanCheck = (isnan(v_star.x()) || isnan(v_star.y()) || isnan(v_star.z()));
@@ -398,15 +402,13 @@ void Grid::gridCollision()
     // Step 5. See eq. 3.17.
     bool nanCheck = false;
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
+        if (m_nodes[i]->getMass() > 0) {
         // Loop through all colliders in the scene
         for (unsigned int c = 0; c < m_colliders.size(); c++) {
             CollisionObject* collider = m_colliders[c];
 
             // Check whether gridNode is intersecting with collider
             if (collider->insideObject(m_nodes[i]->getPosition())) {
-                if (m_nodes[i]->getNewVelocity().norm() > 0) {
-                    //std::cout << "has collided" << std::endl;
-                }
                 Vector3f v_rel = m_nodes[i]->getNewVelocity() - collider->getVelocity();
                 Vector3f n = collider->normalAt(m_nodes[i]->getPosition());
                 float u = collider->coefficientOfFriction();
@@ -425,6 +427,7 @@ void Grid::gridCollision()
                 nanCheck = (isnan(v_prime.x()) || isnan(v_prime.y()) || isnan(v_prime.z()));
                 m_nodes[i]->setNewVelocity(v_prime);
             }
+        }
         }
     }
     if (nanCheck)
@@ -487,7 +490,6 @@ void Grid::updateParticleVelocities()
             v_PIC += m_nodes[i]->getNewVelocity() * weight;
             v_FLIP += (m_nodes[i]->getNewVelocity() - m_nodes[i]->getVelocity()) * weight;
         }
-
         particle->setVelocity((1.f - alpha) * v_PIC + alpha * v_FLIP);
     }
 }
@@ -529,10 +531,27 @@ void Grid::updateParticlePositions(float delta_t)
     bool nanCheck = false;
     m_points.clear();
     for (unsigned int p = 0; p < m_particles.size(); p++) {
-        m_particles[p]->setPosition(m_particles[p]->getPosition() + delta_t * m_particles[p]->getVelocity());
+        if (!outOfBounds(m_particles[p])) {
+            m_particles[p]->setPosition(m_particles[p]->getPosition() + delta_t * m_particles[p]->getVelocity());
+        }
         m_points.push_back(m_particles[p]->getPosition());
         nanCheck = (isnan(m_particles[p]->getPosition()[0]) || isnan(m_particles[p]->getPosition()[0]) || isnan(m_particles[p]->getPosition()[0]));
     }
     if (nanCheck)
         cerr << "Step 10: PARTICLE POSITION IS NAN" << endl;
+}
+
+bool Grid::outOfBounds(Particle* p) {
+    Vector3f pos = p->getPosition();
+    Vector3f min = m_gridBounds.first;
+    Vector3f max = m_gridBounds.second;
+    bool out = false;
+    if (pos.x() > max.x() || pos.x() < min.x()) {
+        if (pos.y() > max.y() || pos.y() < min.y()) {
+            if (pos.z() > max.z() || pos.z() < min.z()) {
+                out = true;
+            }
+        }
+    }
+    return out;
 }

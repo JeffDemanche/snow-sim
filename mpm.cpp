@@ -64,15 +64,18 @@ std::vector<Vector3f> MPM::update(float seconds, int currentFrame) {
     // Step 5
     doStep(5, seconds, "compute grid collisions");
 
-    // Step 6
-    doStep(6, seconds, "explicit solver");
-    //m_grid->implicitSolver();
+//    // Step 6
+//    doStep(6, seconds, "explicit solver");
+//    //m_grid->implicitSolver();
 
     // Step 7
     doStep(7, seconds, "calculate deformation gradient");
 
     // Step 8
     doStep(8, seconds, "update particle velocities");
+
+    // Step 6
+    doStep(6, seconds, "explicit solver");
 
     // Step 9
     doStep(9, seconds, "particle collisions");
