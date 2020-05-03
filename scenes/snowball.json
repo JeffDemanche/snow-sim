@@ -1,0 +1,8 @@
+{
+  "object": "D:/CSCI2240/snow-sim/meshes/tiny-sphere.obj",
+  "output": "D:/CSCI2240/snow-sim/out",
+  "particles": 1500,
+  "frames": 20,
+  "debugStepTimes": true,
+  "debugParticles": 1
+}

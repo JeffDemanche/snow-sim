@@ -2,6 +2,7 @@
 #define MAIN_H
 
 #include<QString>
+#include<string>
 
 struct AppArgs {
     QString infile;

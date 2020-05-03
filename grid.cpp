@@ -29,6 +29,7 @@ Grid::Grid(Mesh snowMesh, size_t numParticles)
     initParticles(points);
     pair<Vector3f, Vector3f> boundingPoints = snowMesh.boundingBoxCorners();
     pair<Vector3f, Vector3f> gridBounds = findGridBoundaries(boundingPoints.first, boundingPoints.second, _groundHeight);
+
     initGrid(gridBounds.first, gridBounds.second);
     initColliders();
 
@@ -111,6 +112,9 @@ void Grid::initGrid(Vector3f min, Vector3f max) {
     // Loop through each cell and create a GridNode at given position
     // (Currently one GridNode is created for bottom left corner of each grid cell.
     // Not sure if it's supposed to be one node at every single intersection of not?)
+    cout << "Grid minimum: " << min.transpose() << endl;
+    cout << "Grid maximum: " << max.transpose() << endl;
+
     for (int w = 0; w < m_gridWidth; w++) {
         for (int h = 0; h < m_gridHeight; h++) {
             for (int d = 0; d < m_gridDepth; d++) {
@@ -208,7 +212,7 @@ float Grid::weightGradientFunctionDelN(float x) {
     // Eq. 3.5
     // x here is the distance between a particle and a grid node.
     if (fabs(x) >= 0 && fabs(x) < 1) {
-       return  (x * x * 3.0 / 2.0) - (2 * fabs(x));
+        return  (x * x * 3.0 / 2.0) - (2 * fabs(x));
     } else if (fabs(x) < 2 && fabs(x) >= 1) {
         return (-0.5 * x * x) + (2 * fabs(x)) - 2;
     } else {
@@ -236,7 +240,8 @@ Vector3f Grid::weightGradientDelOmega(Vector3f particlePos, Vector3f nodePos) {
     float N_iy = weightFunctionN(x_dist) * weightGradientFunctionDelN(y_dist) * weightFunctionN(z_dist);
     float N_iz = weightFunctionN(x_dist) * weightFunctionN(y_dist) * weightGradientFunctionDelN(z_dist);
 
-    return Vector3f(N_ix, N_iy, N_iz);
+    Vector3f weightGradient(N_ix, N_iy, N_iz);
+    return weightGradient;
 }
 
 Matrix3f Grid::velocityGradient(Particle* p) {
@@ -247,10 +252,10 @@ Matrix3f Grid::velocityGradient(Particle* p) {
     Matrix3f velGrad = Matrix3f::Zero();
 
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
+//        if (p->getIndex() == 1000 && weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).norm() > 0)
+//            debug("new vel: ", m_nodes[i]->getNewVelocity());
         velGrad += m_nodes[i]->getNewVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
     }
-    if (p->getIndex() == 1000)
-        debug("vel grad: ", velGrad);
     return velGrad;
 }
 
@@ -292,7 +297,7 @@ void Grid::computeParticleVolumes()
         float particleDensity = 0;
         for (size_t i = 0; i < m_nodes.size(); i++) {
             GridNode* node = m_nodes[i];
-            particleDensity += particle->getMass() * weightN(particle->getPosition(), node->getPosition()) / pow(m_gridSpacing, 3);
+            particleDensity += node->getMass() * weightN(particle->getPosition(), node->getPosition()) / pow(m_gridSpacing, 3);
         }
 
         particle->setVolume(particle->getMass() / particleDensity);
@@ -304,7 +309,6 @@ void Grid::computeGridForces(int thread, int numThreads)
     // Step 3. See eq. 3.9. Do we need to compute the deformation gradient prior to this happening?
     // For grid nodes within range
     bool nanCheck = false;
-    Matrix3f avgStress = Matrix3f::Zero();
     for (unsigned int n = thread; n < m_nodes.size(); n += numThreads) {
         GridNode* curr = m_nodes[n];
         Vector3f sum = Vector3f::Zero();
@@ -319,8 +323,9 @@ void Grid::computeGridForces(int thread, int numThreads)
             float V_p = m_particles[p]->getVolume();
             Vector3f del_w = weightGradientDelOmega(m_particles[p]->getPosition(), curr->getPosition());
             Matrix3f stress = computeStress(F_e, F_p);
-            avgStress += stress * (1.0 / (m_nodes.size() * m_particles.size()));
 
+//            if (p == 1000 && curr->getVelocity().norm() > 0)
+//                debug("Stress: ", stress);
             Vector3f force = V_p * stress * del_w;
             sum += force;
         }
@@ -329,7 +334,6 @@ void Grid::computeGridForces(int thread, int numThreads)
 
         curr->setForce(force);
     }
-    //cout << "Average Stress:" << endl << avgStress << endl;
     if (nanCheck)
         cerr << "Step 3: GRID FORCE IS NAN" << endl;
 }
@@ -380,10 +384,7 @@ void Grid::updateGridVelocities(float delta_t)
         GridNode* curr = m_nodes[i];
         Vector3f v_star(0, 0, 0);
         if (curr->getMass() > 0) {
-            //v_star = curr->getVelocity() + delta_t *  (curr->getForce() + _gravity * curr->getMass());
             v_star = curr->getVelocity() + delta_t * (1.f / curr->getMass()) * (curr->getForce() + _gravity * curr->getMass());
-//            cout << v_star << endl;
-//            cout << "---" << endl;
         }
 
         nanCheck = (isnan(v_star.x()) || isnan(v_star.y()) || isnan(v_star.z()));
@@ -405,7 +406,7 @@ void Grid::gridCollision()
 
                 // Check whether gridNode is intersecting with collider
                 if (collider->insideObject(m_nodes[i]->getPosition())) {
-                    Vector3f v_rel = m_nodes[i]->getNewVelocity() - collider->getVelocity();
+                    Vector3f v_rel = m_nodes[i]->getVelocity() - collider->getVelocity();
                     Vector3f n = collider->normalAt(m_nodes[i]->getPosition());
                     float u = collider->coefficientOfFriction();
                     float v_n = v_rel.dot(n);
@@ -414,9 +415,9 @@ void Grid::gridCollision()
                     if (v_n < 0) { // Collision only applied if objects are not separating
                         Vector3f v_t = v_rel - n * v_n;
                         if (v_t.norm() <= (-u * v_n)) { // If sticking impulse is required
-                            v_rel_prime = Vector3f(0,0,0);
+                            v_rel_prime = Vector3f(0, 0, 0);
                         } else { // Otherwise apply dynamic friction
-                            v_rel_prime = v_t + u * v_n * v_t / v_t.norm();
+                            v_rel_prime = v_t + (u * v_n * v_t / v_t.norm());
                         }
                     }
                     Vector3f v_prime = v_rel_prime + collider->getVelocity(); // Transform relative velocity back to world coords

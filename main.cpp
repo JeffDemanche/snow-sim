@@ -56,20 +56,31 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    AppArgs args = snowSimParseArgs();
+    QCommandLineParser parser;
+    QCommandLineOption f({"f", "scenefile"}, "Scene file to use", "scenefile", "");
+    parser.addOption(f);
+    parser.process(QApplication::arguments());
 
     auto t0 = high_resolution_clock::now();
 
-    // Add --viz to command to run GUI.
-    if (args.vizualize) {
-        MainWindow w;
-        w.show();
-        return a.exec();
-    } else {
-        Mesh m;
-        m.loadFromFile(args.infile.toStdString());
-        MPM mpm = MPM(m, args.outDir, args.numParticles, args.numFrames, args.stepLength);
+    if (parser.isSet(f)) {
+        MPM mpm = MPM(parser.value("scenefile").toStdString());
         mpm.runSimulation();
+    }
+    else {
+        AppArgs args = snowSimParseArgs();
+
+        // Add --viz to command to run GUI.
+        if (args.vizualize) {
+            MainWindow w;
+            w.show();
+            return a.exec();
+        } else {
+            Mesh m;
+            m.loadFromFile(args.infile.toStdString());
+            MPM mpm = MPM(m, args.outDir, args.numParticles, args.numFrames, args.stepLength);
+            mpm.runSimulation();
+        }
     }
 
     auto t1 = high_resolution_clock::now();

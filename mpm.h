@@ -15,6 +15,8 @@ class MPM
 public:
     MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float stepLength, bool debugStepTimes = true, int debugParticles = 1);
 
+    MPM(string sceneFile);
+
     MPM();
 
     /**

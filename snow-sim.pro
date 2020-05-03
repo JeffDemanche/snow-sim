@@ -35,7 +35,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 QMAKE_CXXFLAGS += -msse2
 
-INCLUDEPATH += src glew-1.10.0/include
+INCLUDEPATH += src glew-1.10.0/include \
+    rapidjson/
 DEPENDPATH += src glew-1.10.0/include
 
 SOURCES += main.cpp \
@@ -47,6 +48,7 @@ SOURCES += main.cpp \
     mainwindow.cpp \
     glwidget.cpp \
     glew-1.10.0/src/glew.c \
+    scenefile.cpp \
     util/resourceloader.cpp \
     openglshape.cpp \
     gl/datatype/VBO.cpp \
@@ -65,6 +67,7 @@ HEADERS += \
     mesh.h \
     mpm.h \
     particle.h \
+    scenefile.h \
     util/tiny_obj_loader.h \
     Eigen/Cholesky \
     Eigen/CholmodSupport \
