@@ -2,7 +2,13 @@
   "object": "D:/CSCI2240/snow-sim/meshes/tiny-sphere.obj",
   "output": "D:/CSCI2240/snow-sim/out",
   "particles": 1500,
-  "frames": 20,
+  "frames": 90,
   "debugStepTimes": true,
-  "debugParticles": 1
+  "debugParticles": 1,
+
+  "grid": {
+    "gridMin": [-0.385, -1.43444, -0.42],
+    "gridMax": [0.385, 0.245564, 0.42],
+    "gridSpacing": 0.06
+  }
 }

@@ -9,7 +9,7 @@
 // DEFINE PARAMETERS HERE
 const float _targetDensity = 400.f;
 const Vector3f _initParticleVelocity(0,0,0);
-const float _gridSpacing = 0.035; // Shouldn't be less than 0.001 (in meters)
+// const float _gridSpacing = 0.035; // Shouldn't be less than 0.001 (in meters)
 const Vector3f _gravity(0, -1, 0); // Should be -10 for Earth gravity
 const float _groundHeight = -1; // Location of the ground plane (in meters)
 
@@ -20,17 +20,29 @@ const float _Eo = 1.4E5; // Initial Young's Modulus
 const float _v = 0.2; // Poisson's ratio
 const float _hardening = 10; // Hardening coefficient
 
-Grid::Grid(Mesh snowMesh, size_t numParticles)
+Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo)
 {
-    m_gridSpacing = _gridSpacing;
+    m_gridSpacing = gridInfo.gridSpacing;
     snowMesh.buildBoundingBox();
     vector<Vector3f> points = pointsFromMesh(snowMesh, numParticles);
     m_particleMass = _targetDensity / points.size();
     initParticles(points);
-    pair<Vector3f, Vector3f> boundingPoints = snowMesh.boundingBoxCorners();
-    pair<Vector3f, Vector3f> gridBounds = findGridBoundaries(boundingPoints.first, boundingPoints.second, _groundHeight);
 
-    initGrid(gridBounds.first, gridBounds.second);
+    if (gridInfo.gridMax == Vector3f::Zero() && gridInfo.gridMin == Vector3f::Zero()) {
+        pair<Vector3f, Vector3f> boundingPoints = snowMesh.boundingBoxCorners();
+        pair<Vector3f, Vector3f> gridBounds = findGridBoundaries(boundingPoints.first, boundingPoints.second, _groundHeight);
+
+        initGrid(gridBounds.first, gridBounds.second);
+    } else {
+        Vector3f cushion = Vector3f(m_gridSpacing * 2, m_gridSpacing * 2, m_gridSpacing * 2);
+        Vector3f cushionMin = gridInfo.gridMin + cushion;
+        Vector3f cushionMax = gridInfo.gridMax + cushion;
+        m_gridBounds = pair<Vector3f, Vector3f>(gridInfo.gridMin, gridInfo.gridMax);
+        m_gridWidth = fabs(cushionMax.x() - cushionMin.x()) / m_gridSpacing;
+        m_gridHeight = fabs(cushionMax.y() - cushionMin.y()) / m_gridSpacing;
+        m_gridDepth = fabs(cushionMax.z() - cushionMin.z()) / m_gridSpacing;
+        initGrid(cushionMin, cushionMax);
+    }
     initColliders();
 
     std::cout << "Number of particles: " << m_particles.size() << std::endl;
@@ -114,6 +126,10 @@ void Grid::initGrid(Vector3f min, Vector3f max) {
     // Not sure if it's supposed to be one node at every single intersection of not?)
     cout << "Grid minimum: " << min.transpose() << endl;
     cout << "Grid maximum: " << max.transpose() << endl;
+
+    // TODO custom mu?
+    Vector3f cushion = Vector3f(m_gridSpacing * 2, m_gridSpacing * 2, m_gridSpacing * 2);
+    m_colliders.push_back(new GridBoundCollider(min + cushion, max - cushion, 0.6));
 
     for (int w = 0; w < m_gridWidth; w++) {
         for (int h = 0; h < m_gridHeight; h++) {
@@ -406,6 +422,7 @@ void Grid::gridCollision()
 
                 // Check whether gridNode is intersecting with collider
                 if (collider->insideObject(m_nodes[i]->getPosition())) {
+
                     Vector3f v_rel = m_nodes[i]->getVelocity() - collider->getVelocity();
                     Vector3f n = collider->normalAt(m_nodes[i]->getPosition());
                     float u = collider->coefficientOfFriction();

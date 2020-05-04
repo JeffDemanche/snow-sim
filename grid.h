@@ -8,13 +8,15 @@
 #include "ground.h"
 #include <unordered_map>
 #include <thread>
+#include "gridboundcollider.h"
+#include "scenefile.h"
 
 using namespace std;
 
 class Grid
 {
 public:
-    Grid(Mesh snowMesh, size_t numParticles);
+    Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo);
     ~Grid();
 
     void setCurrentFrame(int currentFrame);

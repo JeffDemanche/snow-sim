@@ -18,7 +18,7 @@ MPM::MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float s
     m_debugStepTimes(debugStepTimes),
     m_debugParticles(debugParticles)
 {
-    m_grid = new Grid(snowMesh, numParticles);
+    m_grid = new Grid(snowMesh, numParticles, SceneFile::defaultGridInfo());
     m_particlePositions = m_grid->getPoints();
     m_firstStep = true;
 }
@@ -36,7 +36,7 @@ MPM::MPM(string sceneFile) {
     m_debugStepTimes = scene.getDebugStepTimes();
     m_debugParticles = scene.getDebugParticles();
 
-    m_grid = new Grid(m_snowMesh, m_numParticles);
+    m_grid = new Grid(m_snowMesh, m_numParticles, scene.getGridInfo());
     m_particlePositions = m_grid->getPoints();
     m_firstStep = true;
 }

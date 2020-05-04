@@ -41,6 +41,7 @@ DEPENDPATH += src glew-1.10.0/include
 
 SOURCES += main.cpp \
     grid.cpp \
+    gridboundcollider.cpp \
     gridnode.cpp \
     mesh.cpp \
     mpm.cpp \
@@ -62,6 +63,7 @@ SOURCES += main.cpp \
 
 HEADERS += \
     grid.h \
+    gridboundcollider.h \
     gridnode.h \
     main.h \
     mesh.h \
