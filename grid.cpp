@@ -97,7 +97,7 @@ pair<Vector3f, Vector3f> Grid::findGridBoundaries(Vector3f bbMin, Vector3f bbMax
     float toAddZ = cellsOnEachSide * m_gridSpacing;
 
     Vector3f gridMin(bbMin.x() - toAddX, bbMax.y() - (gridHeight * m_gridSpacing), bbMin.z() - toAddZ);
-    Vector3f gridMax(bbMax.x() + toAddX, bbMax.y(), bbMax.z() + toAddZ);
+    Vector3f gridMax(bbMax.x() + toAddX, bbMax.y() + 2*m_gridSpacing, bbMax.z() + toAddZ);
 
     pair<Vector3f, Vector3f> result = pair<Vector3f, Vector3f>(gridMin, gridMax);
     m_gridBounds = result;
