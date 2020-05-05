@@ -4,14 +4,15 @@
 #include <set>
 #include <math.h>
 #include "cubecollider.h"
+#include "planecollider.h"
 #include <Eigen/SVD>
 
 // DEFINE PARAMETERS HERE
 const float _targetDensity = 400.f;
-const Vector3f _initParticleVelocity(0,0,0);
+const Vector3f _initParticleVelocity(-0.5,0,0);
 // const float _gridSpacing = 0.035; // Shouldn't be less than 0.001 (in meters)
 const Vector3f _gravity(0, -1, 0); // Should be -10 for Earth gravity
-const float _groundHeight = -1; // Location of the ground plane (in meters)
+const float _groundHeight = -0.2; // Location of the ground plane (in meters)
 
 // TODO Make these optional command line arguments
 const float criticalCompression = 2.5E-2;
@@ -31,7 +32,6 @@ Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo)
     if (gridInfo.gridMax == Vector3f::Zero() && gridInfo.gridMin == Vector3f::Zero()) {
         pair<Vector3f, Vector3f> boundingPoints = snowMesh.boundingBoxCorners();
         pair<Vector3f, Vector3f> gridBounds = findGridBoundaries(boundingPoints.first, boundingPoints.second, _groundHeight);
-
         initGrid(gridBounds.first, gridBounds.second);
     } else {
         Vector3f cushion = Vector3f(m_gridSpacing * 2, m_gridSpacing * 2, m_gridSpacing * 2);
@@ -75,6 +75,10 @@ vector<GridNode*> Grid::getGridNodes() {
 
 void Grid::initColliders() {
     Ground* g = new Ground(_groundHeight, 0.6);
+    PlaneCollider* right = new PlaneCollider(m_gridBounds.second - Vector3f((m_gridSpacing), 0, 0), Vector3f(-1, 0, 0), 0.6);
+    PlaneCollider* left = new PlaneCollider(m_gridBounds.first + Vector3f((m_gridSpacing), 0, 0), Vector3f(1, 0, 0), 0.6);
+    m_colliders.push_back(right);
+    m_colliders.push_back(left);
     m_colliders.push_back(g);
 }
 
@@ -100,11 +104,11 @@ pair<Vector3f, Vector3f> Grid::findGridBoundaries(Vector3f bbMin, Vector3f bbMax
     float spaceBelowMesh = fabs(bbMin.y() - lowestY);
     float gridHeight = int((meshHeight + spaceBelowMesh * 1.5) / m_gridSpacing);
 
-    float gridWidth = int((meshWidth * 2.f) / m_gridSpacing); //number of cells across grid should be
+    float gridWidth = int((meshWidth * 3.f) / m_gridSpacing); //number of cells across grid should be
     float cellsOnEachSide = (gridWidth - (meshWidth / m_gridSpacing)) / 2.f; //number of cells to add on each side of mesh
     float toAddX = cellsOnEachSide * m_gridSpacing;
 
-    float gridDepth = int((meshDepth * 2.f) / m_gridSpacing); //number of cells across grid should be
+    float gridDepth = int((meshDepth * 3.f) / m_gridSpacing); //number of cells across grid should be
     cellsOnEachSide = (gridDepth - (meshDepth / m_gridSpacing)) / 2.f; //number of cells to add on each side of mesh
     float toAddZ = cellsOnEachSide * m_gridSpacing;
 
@@ -128,8 +132,8 @@ void Grid::initGrid(Vector3f min, Vector3f max) {
     cout << "Grid maximum: " << max.transpose() << endl;
 
     // TODO custom mu?
-    Vector3f cushion = Vector3f(m_gridSpacing * 2, m_gridSpacing * 2, m_gridSpacing * 2);
-    m_colliders.push_back(new GridBoundCollider(min + cushion, max - cushion, 0.6));
+    //Vector3f cushion = Vector3f(m_gridSpacing * 2, m_gridSpacing * 2, m_gridSpacing * 2);
+    //m_colliders.push_back(new GridBoundCollider(min + cushion, max - cushion, 0.6));
 
     for (int w = 0; w < m_gridWidth; w++) {
         for (int h = 0; h < m_gridHeight; h++) {
@@ -421,9 +425,10 @@ void Grid::gridCollision()
                 CollisionObject* collider = m_colliders[c];
 
                 // Check whether gridNode is intersecting with collider
-                if (collider->insideObject(m_nodes[i]->getPosition())) {
+                if (collider->insideObject((m_nodes[i]->getPosition()))) {
 
-                    Vector3f v_rel = m_nodes[i]->getVelocity() - collider->getVelocity();
+                    //Vector3f v_rel = m_nodes[i]->getVelocity() - collider->getVelocity();
+                    Vector3f v_rel = m_nodes[i]->getNewVelocity() - collider->getVelocity();
                     Vector3f n = collider->normalAt(m_nodes[i]->getPosition());
                     float u = collider->coefficientOfFriction();
                     float v_n = v_rel.dot(n);
@@ -516,8 +521,9 @@ void Grid::particleCollision()
         for (unsigned int c = 0; c < m_colliders.size(); c++) {
             CollisionObject* collider = m_colliders[c];
 
-            // Check whether gridNode is intersecting with collider
+            // Check whether particle is intersecting with collider
             if (collider->insideObject(m_particles[i]->getPosition())) {
+
                 Vector3f v_rel = m_particles[i]->getVelocity() - collider->getVelocity();
                 Vector3f n = collider->normalAt(m_particles[i]->getPosition());
                 float u = collider->coefficientOfFriction();
@@ -533,6 +539,8 @@ void Grid::particleCollision()
                     }
                 }
                 Vector3f v_prime = v_rel_prime + collider->getVelocity(); // Transform relative velocity back to world coords
+
+
                 m_particles[i]->setVelocity(v_prime);
             }
         }
@@ -545,9 +553,11 @@ void Grid::updateParticlePositions(float delta_t)
     bool nanCheck = false;
     m_points.clear();
     for (unsigned int p = 0; p < m_particles.size(); p++) {
-        if (!outOfBounds(m_particles[p])) {
+        //if (!outOfBounds(m_particles[p])) {
             m_particles[p]->setPosition(m_particles[p]->getPosition() + delta_t * m_particles[p]->getVelocity());
-        }
+        //} else {
+        //    cout << "particle cout of grid bounds" << endl;
+        //}
         m_points.push_back(m_particles[p]->getPosition());
         nanCheck = (isnan(m_particles[p]->getPosition()[0]) || isnan(m_particles[p]->getPosition()[0]) || isnan(m_particles[p]->getPosition()[0]));
     }

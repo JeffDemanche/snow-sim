@@ -15,7 +15,7 @@ CXX           = /Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Tool
 DEFINES       = -DQT_DEPRECATED_WARNINGS -DQT_QML_DEBUG -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_XML_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -isysroot /Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk -mmacosx-version-min=10.8 -g -Wall -W -fPIC $(DEFINES)
 CXXFLAGS      = -pipe -stdlib=libc++ -isysroot /Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk -mmacosx-version-min=10.8 -std=c++14 -msse2 -g -std=gnu++1y -Wall -W -fPIC $(DEFINES)
-INCPATH       = -I. -Isrc -Iglew-1.10.0/include -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtOpenGL.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtGui.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtXml.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers -I. -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks/AGL.framework/Headers -I. -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/mkspecs/macx-clang -F/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib
+INCPATH       = -I. -Isrc -Iglew-1.10.0/include -Irapidjson -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtOpenGL.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtGui.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtXml.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers -I. -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks/AGL.framework/Headers -I. -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/mkspecs/macx-clang -F/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib
 QMAKE         = /Users/jennasoenksen/Qt5.7.1/5.7/clang_64/bin/qmake
 DEL_FILE      = rm -f
 CHK_DIR_EXISTS= test -d
@@ -50,6 +50,7 @@ OBJECTS_DIR   = ./
 
 SOURCES       = main.cpp \
 		grid.cpp \
+		gridboundcollider.cpp \
 		gridnode.cpp \
 		mesh.cpp \
 		mpm.cpp \
@@ -57,6 +58,7 @@ SOURCES       = main.cpp \
 		mainwindow.cpp \
 		glwidget.cpp \
 		glew-1.10.0/src/glew.c \
+		scenefile.cpp \
 		util/resourceloader.cpp \
 		openglshape.cpp \
 		gl/datatype/VBO.cpp \
@@ -66,10 +68,12 @@ SOURCES       = main.cpp \
 		gl/GLDebug.cpp \
 		collisionobject.cpp \
 		ground.cpp \
-		cubecollider.cpp moc_mainwindow.cpp \
+		cubecollider.cpp \
+		planecollider.cpp moc_mainwindow.cpp \
 		moc_glwidget.cpp
 OBJECTS       = main.o \
 		grid.o \
+		gridboundcollider.o \
 		gridnode.o \
 		mesh.o \
 		mpm.o \
@@ -77,6 +81,7 @@ OBJECTS       = main.o \
 		mainwindow.o \
 		glwidget.o \
 		glew.o \
+		scenefile.o \
 		resourceloader.o \
 		openglshape.o \
 		VBO.o \
@@ -87,6 +92,7 @@ OBJECTS       = main.o \
 		collisionobject.o \
 		ground.o \
 		cubecollider.o \
+		planecollider.o \
 		moc_mainwindow.o \
 		moc_glwidget.o
 DIST          = shaders/shader.frag \
@@ -252,11 +258,13 @@ DIST          = shaders/shader.frag \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/mkspecs/features/yacc.prf \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/mkspecs/features/lex.prf \
 		snow-sim.pro grid.h \
+		gridboundcollider.h \
 		gridnode.h \
 		main.h \
 		mesh.h \
 		mpm.h \
 		particle.h \
+		scenefile.h \
 		util/tiny_obj_loader.h \
 		Eigen/Cholesky \
 		Eigen/CholmodSupport \
@@ -571,8 +579,10 @@ DIST          = shaders/shader.frag \
 		gl/GLDebug.h \
 		collisionobject.h \
 		ground.h \
-		cubecollider.h main.cpp \
+		cubecollider.h \
+		planecollider.h main.cpp \
 		grid.cpp \
+		gridboundcollider.cpp \
 		gridnode.cpp \
 		mesh.cpp \
 		mpm.cpp \
@@ -580,6 +590,7 @@ DIST          = shaders/shader.frag \
 		mainwindow.cpp \
 		glwidget.cpp \
 		glew-1.10.0/src/glew.c \
+		scenefile.cpp \
 		util/resourceloader.cpp \
 		openglshape.cpp \
 		gl/datatype/VBO.cpp \
@@ -589,7 +600,8 @@ DIST          = shaders/shader.frag \
 		gl/GLDebug.cpp \
 		collisionobject.cpp \
 		ground.cpp \
-		cubecollider.cpp
+		cubecollider.cpp \
+		planecollider.cpp
 QMAKE_TARGET  = snow-sim
 DESTDIR       = 
 TARGET        = snow-sim
@@ -944,8 +956,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents grid.h gridnode.h main.h mesh.h mpm.h particle.h util/tiny_obj_loader.h Eigen/Cholesky Eigen/CholmodSupport Eigen/Core Eigen/Dense Eigen/Eigen Eigen/Eigenvalues Eigen/Geometry Eigen/Householder Eigen/IterativeLinearSolvers Eigen/Jacobi Eigen/LU Eigen/MetisSupport Eigen/OrderingMethods Eigen/PardisoSupport Eigen/PaStiXSupport Eigen/QR Eigen/QtAlignedMalloc Eigen/Sparse Eigen/SparseCholesky Eigen/SparseCore Eigen/SparseLU Eigen/SparseQR Eigen/SPQRSupport Eigen/StdDeque Eigen/StdList Eigen/StdVector Eigen/SuperLUSupport Eigen/SVD Eigen/UmfPackSupport Eigen/src/Cholesky/LDLT.h Eigen/src/Cholesky/LLT.h Eigen/src/Cholesky/LLT_LAPACKE.h Eigen/src/CholmodSupport/CholmodSupport.h Eigen/src/Core/arch/AltiVec/Complex.h Eigen/src/Core/arch/AltiVec/MathFunctions.h Eigen/src/Core/arch/AltiVec/PacketMath.h Eigen/src/Core/arch/AVX/Complex.h Eigen/src/Core/arch/AVX/MathFunctions.h Eigen/src/Core/arch/AVX/PacketMath.h Eigen/src/Core/arch/AVX/TypeCasting.h Eigen/src/Core/arch/AVX512/MathFunctions.h Eigen/src/Core/arch/AVX512/PacketMath.h Eigen/src/Core/arch/CUDA/Complex.h Eigen/src/Core/arch/CUDA/Half.h Eigen/src/Core/arch/CUDA/MathFunctions.h Eigen/src/Core/arch/CUDA/PacketMath.h Eigen/src/Core/arch/CUDA/PacketMathHalf.h Eigen/src/Core/arch/CUDA/TypeCasting.h Eigen/src/Core/arch/Default/Settings.h Eigen/src/Core/arch/NEON/Complex.h Eigen/src/Core/arch/NEON/MathFunctions.h Eigen/src/Core/arch/NEON/PacketMath.h Eigen/src/Core/arch/SSE/Complex.h Eigen/src/Core/arch/SSE/MathFunctions.h Eigen/src/Core/arch/SSE/PacketMath.h Eigen/src/Core/arch/SSE/TypeCasting.h Eigen/src/Core/arch/ZVector/Complex.h Eigen/src/Core/arch/ZVector/MathFunctions.h Eigen/src/Core/arch/ZVector/PacketMath.h Eigen/src/Core/functors/AssignmentFunctors.h Eigen/src/Core/functors/BinaryFunctors.h Eigen/src/Core/functors/NullaryFunctors.h Eigen/src/Core/functors/StlFunctors.h Eigen/src/Core/functors/TernaryFunctors.h Eigen/src/Core/functors/UnaryFunctors.h Eigen/src/Core/products/GeneralBlockPanelKernel.h Eigen/src/Core/products/GeneralMatrixMatrix.h Eigen/src/Core/products/GeneralMatrixMatrix_BLAS.h Eigen/src/Core/products/GeneralMatrixMatrixTriangular.h Eigen/src/Core/products/GeneralMatrixMatrixTriangular_BLAS.h Eigen/src/Core/products/GeneralMatrixVector.h Eigen/src/Core/products/GeneralMatrixVector_BLAS.h Eigen/src/Core/products/Parallelizer.h Eigen/src/Core/products/SelfadjointMatrixMatrix.h Eigen/src/Core/products/SelfadjointMatrixMatrix_BLAS.h Eigen/src/Core/products/SelfadjointMatrixVector.h Eigen/src/Core/products/SelfadjointMatrixVector_BLAS.h Eigen/src/Core/products/SelfadjointProduct.h Eigen/src/Core/products/SelfadjointRank2Update.h Eigen/src/Core/products/TriangularMatrixMatrix.h Eigen/src/Core/products/TriangularMatrixMatrix_BLAS.h Eigen/src/Core/products/TriangularMatrixVector.h Eigen/src/Core/products/TriangularMatrixVector_BLAS.h Eigen/src/Core/products/TriangularSolverMatrix.h Eigen/src/Core/products/TriangularSolverMatrix_BLAS.h Eigen/src/Core/products/TriangularSolverVector.h Eigen/src/Core/util/BlasUtil.h Eigen/src/Core/util/Constants.h Eigen/src/Core/util/DisableStupidWarnings.h Eigen/src/Core/util/ForwardDeclarations.h Eigen/src/Core/util/Macros.h Eigen/src/Core/util/Memory.h Eigen/src/Core/util/Meta.h Eigen/src/Core/util/MKL_support.h Eigen/src/Core/util/NonMPL2.h Eigen/src/Core/util/ReenableStupidWarnings.h Eigen/src/Core/util/StaticAssert.h Eigen/src/Core/util/XprHelper.h Eigen/src/Core/Array.h Eigen/src/Core/ArrayBase.h Eigen/src/Core/ArrayWrapper.h Eigen/src/Core/Assign.h Eigen/src/Core/Assign_MKL.h Eigen/src/Core/AssignEvaluator.h Eigen/src/Core/BandMatrix.h Eigen/src/Core/Block.h Eigen/src/Core/BooleanRedux.h Eigen/src/Core/CommaInitializer.h Eigen/src/Core/ConditionEstimator.h Eigen/src/Core/CoreEvaluators.h Eigen/src/Core/CoreIterators.h Eigen/src/Core/CwiseBinaryOp.h Eigen/src/Core/CwiseNullaryOp.h Eigen/src/Core/CwiseTernaryOp.h Eigen/src/Core/CwiseUnaryOp.h Eigen/src/Core/CwiseUnaryView.h Eigen/src/Core/DenseBase.h Eigen/src/Core/DenseCoeffsBase.h Eigen/src/Core/DenseStorage.h Eigen/src/Core/Diagonal.h Eigen/src/Core/DiagonalMatrix.h Eigen/src/Core/DiagonalProduct.h Eigen/src/Core/Dot.h Eigen/src/Core/EigenBase.h Eigen/src/Core/ForceAlignedAccess.h Eigen/src/Core/Fuzzy.h Eigen/src/Core/GeneralProduct.h Eigen/src/Core/GenericPacketMath.h Eigen/src/Core/GlobalFunctions.h Eigen/src/Core/Inverse.h Eigen/src/Core/IO.h Eigen/src/Core/Map.h Eigen/src/Core/MapBase.h Eigen/src/Core/MathFunctions.h Eigen/src/Core/MathFunctionsImpl.h Eigen/src/Core/Matrix.h Eigen/src/Core/MatrixBase.h Eigen/src/Core/NestByValue.h Eigen/src/Core/NoAlias.h Eigen/src/Core/NumTraits.h Eigen/src/Core/PermutationMatrix.h Eigen/src/Core/PlainObjectBase.h Eigen/src/Core/Product.h Eigen/src/Core/ProductEvaluators.h Eigen/src/Core/Random.h Eigen/src/Core/Redux.h Eigen/src/Core/Ref.h Eigen/src/Core/Replicate.h Eigen/src/Core/ReturnByValue.h Eigen/src/Core/Reverse.h Eigen/src/Core/Select.h Eigen/src/Core/SelfAdjointView.h Eigen/src/Core/SelfCwiseBinaryOp.h Eigen/src/Core/Solve.h Eigen/src/Core/SolverBase.h Eigen/src/Core/SolveTriangular.h Eigen/src/Core/StableNorm.h Eigen/src/Core/Stride.h Eigen/src/Core/Swap.h Eigen/src/Core/Transpose.h Eigen/src/Core/Transpositions.h Eigen/src/Core/TriangularMatrix.h Eigen/src/Core/VectorBlock.h Eigen/src/Core/VectorwiseOp.h Eigen/src/Core/Visitor.h Eigen/src/Eigenvalues/ComplexEigenSolver.h Eigen/src/Eigenvalues/ComplexSchur.h Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h Eigen/src/Eigenvalues/EigenSolver.h Eigen/src/Eigenvalues/GeneralizedEigenSolver.h Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h Eigen/src/Eigenvalues/HessenbergDecomposition.h Eigen/src/Eigenvalues/MatrixBaseEigenvalues.h Eigen/src/Eigenvalues/RealQZ.h Eigen/src/Eigenvalues/RealSchur.h Eigen/src/Eigenvalues/RealSchur_LAPACKE.h Eigen/src/Eigenvalues/SelfAdjointEigenSolver.h Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h Eigen/src/Eigenvalues/Tridiagonalization.h Eigen/src/Geometry/arch/Geometry_SSE.h Eigen/src/Geometry/AlignedBox.h Eigen/src/Geometry/AngleAxis.h Eigen/src/Geometry/EulerAngles.h Eigen/src/Geometry/Homogeneous.h Eigen/src/Geometry/Hyperplane.h Eigen/src/Geometry/OrthoMethods.h Eigen/src/Geometry/ParametrizedLine.h Eigen/src/Geometry/Quaternion.h Eigen/src/Geometry/Rotation2D.h Eigen/src/Geometry/RotationBase.h Eigen/src/Geometry/Scaling.h Eigen/src/Geometry/Transform.h Eigen/src/Geometry/Translation.h Eigen/src/Geometry/Umeyama.h Eigen/src/Householder/BlockHouseholder.h Eigen/src/Householder/Householder.h Eigen/src/Householder/HouseholderSequence.h Eigen/src/IterativeLinearSolvers/BasicPreconditioners.h Eigen/src/IterativeLinearSolvers/BiCGSTAB.h Eigen/src/IterativeLinearSolvers/ConjugateGradient.h Eigen/src/IterativeLinearSolvers/IncompleteCholesky.h Eigen/src/IterativeLinearSolvers/IncompleteLUT.h Eigen/src/IterativeLinearSolvers/IterativeSolverBase.h Eigen/src/IterativeLinearSolvers/LeastSquareConjugateGradient.h Eigen/src/IterativeLinearSolvers/SolveWithGuess.h Eigen/src/Jacobi/Jacobi.h Eigen/src/LU/arch/Inverse_SSE.h Eigen/src/LU/Determinant.h Eigen/src/LU/FullPivLU.h Eigen/src/LU/InverseImpl.h Eigen/src/LU/PartialPivLU.h Eigen/src/LU/PartialPivLU_LAPACKE.h Eigen/src/MetisSupport/MetisSupport.h Eigen/src/misc/blas.h Eigen/src/misc/Image.h Eigen/src/misc/Kernel.h Eigen/src/misc/lapack.h Eigen/src/misc/lapacke.h Eigen/src/misc/lapacke_mangling.h Eigen/src/misc/RealSvd2x2.h Eigen/src/OrderingMethods/Amd.h Eigen/src/OrderingMethods/Eigen_Colamd.h Eigen/src/OrderingMethods/Ordering.h Eigen/src/PardisoSupport/PardisoSupport.h Eigen/src/PaStiXSupport/PaStiXSupport.h Eigen/src/plugins/ArrayCwiseBinaryOps.h Eigen/src/plugins/ArrayCwiseUnaryOps.h Eigen/src/plugins/BlockMethods.h Eigen/src/plugins/CommonCwiseBinaryOps.h Eigen/src/plugins/CommonCwiseUnaryOps.h Eigen/src/plugins/MatrixCwiseBinaryOps.h Eigen/src/plugins/MatrixCwiseUnaryOps.h Eigen/src/QR/ColPivHouseholderQR.h Eigen/src/QR/ColPivHouseholderQR_LAPACKE.h Eigen/src/QR/CompleteOrthogonalDecomposition.h Eigen/src/QR/FullPivHouseholderQR.h Eigen/src/QR/HouseholderQR.h Eigen/src/QR/HouseholderQR_LAPACKE.h Eigen/src/SparseCholesky/SimplicialCholesky.h Eigen/src/SparseCholesky/SimplicialCholesky_impl.h Eigen/src/SparseCore/AmbiVector.h Eigen/src/SparseCore/CompressedStorage.h Eigen/src/SparseCore/ConservativeSparseSparseProduct.h Eigen/src/SparseCore/MappedSparseMatrix.h Eigen/src/SparseCore/SparseAssign.h Eigen/src/SparseCore/SparseBlock.h Eigen/src/SparseCore/SparseColEtree.h Eigen/src/SparseCore/SparseCompressedBase.h Eigen/src/SparseCore/SparseCwiseBinaryOp.h Eigen/src/SparseCore/SparseCwiseUnaryOp.h Eigen/src/SparseCore/SparseDenseProduct.h Eigen/src/SparseCore/SparseDiagonalProduct.h Eigen/src/SparseCore/SparseDot.h Eigen/src/SparseCore/SparseFuzzy.h Eigen/src/SparseCore/SparseMap.h Eigen/src/SparseCore/SparseMatrix.h Eigen/src/SparseCore/SparseMatrixBase.h Eigen/src/SparseCore/SparsePermutation.h Eigen/src/SparseCore/SparseProduct.h Eigen/src/SparseCore/SparseRedux.h Eigen/src/SparseCore/SparseRef.h Eigen/src/SparseCore/SparseSelfAdjointView.h Eigen/src/SparseCore/SparseSolverBase.h Eigen/src/SparseCore/SparseSparseProductWithPruning.h Eigen/src/SparseCore/SparseTranspose.h Eigen/src/SparseCore/SparseTriangularView.h Eigen/src/SparseCore/SparseUtil.h Eigen/src/SparseCore/SparseVector.h Eigen/src/SparseCore/SparseView.h Eigen/src/SparseCore/TriangularSolver.h Eigen/src/SparseLU/SparseLU.h Eigen/src/SparseLU/SparseLU_column_bmod.h Eigen/src/SparseLU/SparseLU_column_dfs.h Eigen/src/SparseLU/SparseLU_copy_to_ucol.h Eigen/src/SparseLU/SparseLU_gemm_kernel.h Eigen/src/SparseLU/SparseLU_heap_relax_snode.h Eigen/src/SparseLU/SparseLU_kernel_bmod.h Eigen/src/SparseLU/SparseLU_Memory.h Eigen/src/SparseLU/SparseLU_panel_bmod.h Eigen/src/SparseLU/SparseLU_panel_dfs.h Eigen/src/SparseLU/SparseLU_pivotL.h Eigen/src/SparseLU/SparseLU_pruneL.h Eigen/src/SparseLU/SparseLU_relax_snode.h Eigen/src/SparseLU/SparseLU_Structs.h Eigen/src/SparseLU/SparseLU_SupernodalMatrix.h Eigen/src/SparseLU/SparseLU_Utils.h Eigen/src/SparseLU/SparseLUImpl.h Eigen/src/SparseQR/SparseQR.h Eigen/src/SPQRSupport/SuiteSparseQRSupport.h Eigen/src/StlSupport/details.h Eigen/src/StlSupport/StdDeque.h Eigen/src/StlSupport/StdList.h Eigen/src/StlSupport/StdVector.h Eigen/src/SuperLUSupport/SuperLUSupport.h Eigen/src/SVD/BDCSVD.h Eigen/src/SVD/JacobiSVD.h Eigen/src/SVD/JacobiSVD_LAPACKE.h Eigen/src/SVD/SVDBase.h Eigen/src/SVD/UpperBidiagonalization.h Eigen/src/UmfPackSupport/UmfPackSupport.h mainwindow.h glwidget.h glew-1.10.0/include/GL/glew.h ui_mainwindow.h util/resourceloader.h openglshape.h gl/datatype/VBO.h gl/datatype/VBOAttribMarker.h gl/datatype/VAO.h gl/datatype/IBO.h gl/GLDebug.h collisionobject.h ground.h cubecollider.h $(DISTDIR)/
-	$(COPY_FILE) --parents main.cpp grid.cpp gridnode.cpp mesh.cpp mpm.cpp particle.cpp mainwindow.cpp glwidget.cpp glew-1.10.0/src/glew.c util/resourceloader.cpp openglshape.cpp gl/datatype/VBO.cpp gl/datatype/VBOAttribMarker.cpp gl/datatype/VAO.cpp gl/datatype/IBO.cpp gl/GLDebug.cpp collisionobject.cpp ground.cpp cubecollider.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents grid.h gridboundcollider.h gridnode.h main.h mesh.h mpm.h particle.h scenefile.h util/tiny_obj_loader.h Eigen/Cholesky Eigen/CholmodSupport Eigen/Core Eigen/Dense Eigen/Eigen Eigen/Eigenvalues Eigen/Geometry Eigen/Householder Eigen/IterativeLinearSolvers Eigen/Jacobi Eigen/LU Eigen/MetisSupport Eigen/OrderingMethods Eigen/PardisoSupport Eigen/PaStiXSupport Eigen/QR Eigen/QtAlignedMalloc Eigen/Sparse Eigen/SparseCholesky Eigen/SparseCore Eigen/SparseLU Eigen/SparseQR Eigen/SPQRSupport Eigen/StdDeque Eigen/StdList Eigen/StdVector Eigen/SuperLUSupport Eigen/SVD Eigen/UmfPackSupport Eigen/src/Cholesky/LDLT.h Eigen/src/Cholesky/LLT.h Eigen/src/Cholesky/LLT_LAPACKE.h Eigen/src/CholmodSupport/CholmodSupport.h Eigen/src/Core/arch/AltiVec/Complex.h Eigen/src/Core/arch/AltiVec/MathFunctions.h Eigen/src/Core/arch/AltiVec/PacketMath.h Eigen/src/Core/arch/AVX/Complex.h Eigen/src/Core/arch/AVX/MathFunctions.h Eigen/src/Core/arch/AVX/PacketMath.h Eigen/src/Core/arch/AVX/TypeCasting.h Eigen/src/Core/arch/AVX512/MathFunctions.h Eigen/src/Core/arch/AVX512/PacketMath.h Eigen/src/Core/arch/CUDA/Complex.h Eigen/src/Core/arch/CUDA/Half.h Eigen/src/Core/arch/CUDA/MathFunctions.h Eigen/src/Core/arch/CUDA/PacketMath.h Eigen/src/Core/arch/CUDA/PacketMathHalf.h Eigen/src/Core/arch/CUDA/TypeCasting.h Eigen/src/Core/arch/Default/Settings.h Eigen/src/Core/arch/NEON/Complex.h Eigen/src/Core/arch/NEON/MathFunctions.h Eigen/src/Core/arch/NEON/PacketMath.h Eigen/src/Core/arch/SSE/Complex.h Eigen/src/Core/arch/SSE/MathFunctions.h Eigen/src/Core/arch/SSE/PacketMath.h Eigen/src/Core/arch/SSE/TypeCasting.h Eigen/src/Core/arch/ZVector/Complex.h Eigen/src/Core/arch/ZVector/MathFunctions.h Eigen/src/Core/arch/ZVector/PacketMath.h Eigen/src/Core/functors/AssignmentFunctors.h Eigen/src/Core/functors/BinaryFunctors.h Eigen/src/Core/functors/NullaryFunctors.h Eigen/src/Core/functors/StlFunctors.h Eigen/src/Core/functors/TernaryFunctors.h Eigen/src/Core/functors/UnaryFunctors.h Eigen/src/Core/products/GeneralBlockPanelKernel.h Eigen/src/Core/products/GeneralMatrixMatrix.h Eigen/src/Core/products/GeneralMatrixMatrix_BLAS.h Eigen/src/Core/products/GeneralMatrixMatrixTriangular.h Eigen/src/Core/products/GeneralMatrixMatrixTriangular_BLAS.h Eigen/src/Core/products/GeneralMatrixVector.h Eigen/src/Core/products/GeneralMatrixVector_BLAS.h Eigen/src/Core/products/Parallelizer.h Eigen/src/Core/products/SelfadjointMatrixMatrix.h Eigen/src/Core/products/SelfadjointMatrixMatrix_BLAS.h Eigen/src/Core/products/SelfadjointMatrixVector.h Eigen/src/Core/products/SelfadjointMatrixVector_BLAS.h Eigen/src/Core/products/SelfadjointProduct.h Eigen/src/Core/products/SelfadjointRank2Update.h Eigen/src/Core/products/TriangularMatrixMatrix.h Eigen/src/Core/products/TriangularMatrixMatrix_BLAS.h Eigen/src/Core/products/TriangularMatrixVector.h Eigen/src/Core/products/TriangularMatrixVector_BLAS.h Eigen/src/Core/products/TriangularSolverMatrix.h Eigen/src/Core/products/TriangularSolverMatrix_BLAS.h Eigen/src/Core/products/TriangularSolverVector.h Eigen/src/Core/util/BlasUtil.h Eigen/src/Core/util/Constants.h Eigen/src/Core/util/DisableStupidWarnings.h Eigen/src/Core/util/ForwardDeclarations.h Eigen/src/Core/util/Macros.h Eigen/src/Core/util/Memory.h Eigen/src/Core/util/Meta.h Eigen/src/Core/util/MKL_support.h Eigen/src/Core/util/NonMPL2.h Eigen/src/Core/util/ReenableStupidWarnings.h Eigen/src/Core/util/StaticAssert.h Eigen/src/Core/util/XprHelper.h Eigen/src/Core/Array.h Eigen/src/Core/ArrayBase.h Eigen/src/Core/ArrayWrapper.h Eigen/src/Core/Assign.h Eigen/src/Core/Assign_MKL.h Eigen/src/Core/AssignEvaluator.h Eigen/src/Core/BandMatrix.h Eigen/src/Core/Block.h Eigen/src/Core/BooleanRedux.h Eigen/src/Core/CommaInitializer.h Eigen/src/Core/ConditionEstimator.h Eigen/src/Core/CoreEvaluators.h Eigen/src/Core/CoreIterators.h Eigen/src/Core/CwiseBinaryOp.h Eigen/src/Core/CwiseNullaryOp.h Eigen/src/Core/CwiseTernaryOp.h Eigen/src/Core/CwiseUnaryOp.h Eigen/src/Core/CwiseUnaryView.h Eigen/src/Core/DenseBase.h Eigen/src/Core/DenseCoeffsBase.h Eigen/src/Core/DenseStorage.h Eigen/src/Core/Diagonal.h Eigen/src/Core/DiagonalMatrix.h Eigen/src/Core/DiagonalProduct.h Eigen/src/Core/Dot.h Eigen/src/Core/EigenBase.h Eigen/src/Core/ForceAlignedAccess.h Eigen/src/Core/Fuzzy.h Eigen/src/Core/GeneralProduct.h Eigen/src/Core/GenericPacketMath.h Eigen/src/Core/GlobalFunctions.h Eigen/src/Core/Inverse.h Eigen/src/Core/IO.h Eigen/src/Core/Map.h Eigen/src/Core/MapBase.h Eigen/src/Core/MathFunctions.h Eigen/src/Core/MathFunctionsImpl.h Eigen/src/Core/Matrix.h Eigen/src/Core/MatrixBase.h Eigen/src/Core/NestByValue.h Eigen/src/Core/NoAlias.h Eigen/src/Core/NumTraits.h Eigen/src/Core/PermutationMatrix.h Eigen/src/Core/PlainObjectBase.h Eigen/src/Core/Product.h Eigen/src/Core/ProductEvaluators.h Eigen/src/Core/Random.h Eigen/src/Core/Redux.h Eigen/src/Core/Ref.h Eigen/src/Core/Replicate.h Eigen/src/Core/ReturnByValue.h Eigen/src/Core/Reverse.h Eigen/src/Core/Select.h Eigen/src/Core/SelfAdjointView.h Eigen/src/Core/SelfCwiseBinaryOp.h Eigen/src/Core/Solve.h Eigen/src/Core/SolverBase.h Eigen/src/Core/SolveTriangular.h Eigen/src/Core/StableNorm.h Eigen/src/Core/Stride.h Eigen/src/Core/Swap.h Eigen/src/Core/Transpose.h Eigen/src/Core/Transpositions.h Eigen/src/Core/TriangularMatrix.h Eigen/src/Core/VectorBlock.h Eigen/src/Core/VectorwiseOp.h Eigen/src/Core/Visitor.h Eigen/src/Eigenvalues/ComplexEigenSolver.h Eigen/src/Eigenvalues/ComplexSchur.h Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h Eigen/src/Eigenvalues/EigenSolver.h Eigen/src/Eigenvalues/GeneralizedEigenSolver.h Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h Eigen/src/Eigenvalues/HessenbergDecomposition.h Eigen/src/Eigenvalues/MatrixBaseEigenvalues.h Eigen/src/Eigenvalues/RealQZ.h Eigen/src/Eigenvalues/RealSchur.h Eigen/src/Eigenvalues/RealSchur_LAPACKE.h Eigen/src/Eigenvalues/SelfAdjointEigenSolver.h Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h Eigen/src/Eigenvalues/Tridiagonalization.h Eigen/src/Geometry/arch/Geometry_SSE.h Eigen/src/Geometry/AlignedBox.h Eigen/src/Geometry/AngleAxis.h Eigen/src/Geometry/EulerAngles.h Eigen/src/Geometry/Homogeneous.h Eigen/src/Geometry/Hyperplane.h Eigen/src/Geometry/OrthoMethods.h Eigen/src/Geometry/ParametrizedLine.h Eigen/src/Geometry/Quaternion.h Eigen/src/Geometry/Rotation2D.h Eigen/src/Geometry/RotationBase.h Eigen/src/Geometry/Scaling.h Eigen/src/Geometry/Transform.h Eigen/src/Geometry/Translation.h Eigen/src/Geometry/Umeyama.h Eigen/src/Householder/BlockHouseholder.h Eigen/src/Householder/Householder.h Eigen/src/Householder/HouseholderSequence.h Eigen/src/IterativeLinearSolvers/BasicPreconditioners.h Eigen/src/IterativeLinearSolvers/BiCGSTAB.h Eigen/src/IterativeLinearSolvers/ConjugateGradient.h Eigen/src/IterativeLinearSolvers/IncompleteCholesky.h Eigen/src/IterativeLinearSolvers/IncompleteLUT.h Eigen/src/IterativeLinearSolvers/IterativeSolverBase.h Eigen/src/IterativeLinearSolvers/LeastSquareConjugateGradient.h Eigen/src/IterativeLinearSolvers/SolveWithGuess.h Eigen/src/Jacobi/Jacobi.h Eigen/src/LU/arch/Inverse_SSE.h Eigen/src/LU/Determinant.h Eigen/src/LU/FullPivLU.h Eigen/src/LU/InverseImpl.h Eigen/src/LU/PartialPivLU.h Eigen/src/LU/PartialPivLU_LAPACKE.h Eigen/src/MetisSupport/MetisSupport.h Eigen/src/misc/blas.h Eigen/src/misc/Image.h Eigen/src/misc/Kernel.h Eigen/src/misc/lapack.h Eigen/src/misc/lapacke.h Eigen/src/misc/lapacke_mangling.h Eigen/src/misc/RealSvd2x2.h Eigen/src/OrderingMethods/Amd.h Eigen/src/OrderingMethods/Eigen_Colamd.h Eigen/src/OrderingMethods/Ordering.h Eigen/src/PardisoSupport/PardisoSupport.h Eigen/src/PaStiXSupport/PaStiXSupport.h Eigen/src/plugins/ArrayCwiseBinaryOps.h Eigen/src/plugins/ArrayCwiseUnaryOps.h Eigen/src/plugins/BlockMethods.h Eigen/src/plugins/CommonCwiseBinaryOps.h Eigen/src/plugins/CommonCwiseUnaryOps.h Eigen/src/plugins/MatrixCwiseBinaryOps.h Eigen/src/plugins/MatrixCwiseUnaryOps.h Eigen/src/QR/ColPivHouseholderQR.h Eigen/src/QR/ColPivHouseholderQR_LAPACKE.h Eigen/src/QR/CompleteOrthogonalDecomposition.h Eigen/src/QR/FullPivHouseholderQR.h Eigen/src/QR/HouseholderQR.h Eigen/src/QR/HouseholderQR_LAPACKE.h Eigen/src/SparseCholesky/SimplicialCholesky.h Eigen/src/SparseCholesky/SimplicialCholesky_impl.h Eigen/src/SparseCore/AmbiVector.h Eigen/src/SparseCore/CompressedStorage.h Eigen/src/SparseCore/ConservativeSparseSparseProduct.h Eigen/src/SparseCore/MappedSparseMatrix.h Eigen/src/SparseCore/SparseAssign.h Eigen/src/SparseCore/SparseBlock.h Eigen/src/SparseCore/SparseColEtree.h Eigen/src/SparseCore/SparseCompressedBase.h Eigen/src/SparseCore/SparseCwiseBinaryOp.h Eigen/src/SparseCore/SparseCwiseUnaryOp.h Eigen/src/SparseCore/SparseDenseProduct.h Eigen/src/SparseCore/SparseDiagonalProduct.h Eigen/src/SparseCore/SparseDot.h Eigen/src/SparseCore/SparseFuzzy.h Eigen/src/SparseCore/SparseMap.h Eigen/src/SparseCore/SparseMatrix.h Eigen/src/SparseCore/SparseMatrixBase.h Eigen/src/SparseCore/SparsePermutation.h Eigen/src/SparseCore/SparseProduct.h Eigen/src/SparseCore/SparseRedux.h Eigen/src/SparseCore/SparseRef.h Eigen/src/SparseCore/SparseSelfAdjointView.h Eigen/src/SparseCore/SparseSolverBase.h Eigen/src/SparseCore/SparseSparseProductWithPruning.h Eigen/src/SparseCore/SparseTranspose.h Eigen/src/SparseCore/SparseTriangularView.h Eigen/src/SparseCore/SparseUtil.h Eigen/src/SparseCore/SparseVector.h Eigen/src/SparseCore/SparseView.h Eigen/src/SparseCore/TriangularSolver.h Eigen/src/SparseLU/SparseLU.h Eigen/src/SparseLU/SparseLU_column_bmod.h Eigen/src/SparseLU/SparseLU_column_dfs.h Eigen/src/SparseLU/SparseLU_copy_to_ucol.h Eigen/src/SparseLU/SparseLU_gemm_kernel.h Eigen/src/SparseLU/SparseLU_heap_relax_snode.h Eigen/src/SparseLU/SparseLU_kernel_bmod.h Eigen/src/SparseLU/SparseLU_Memory.h Eigen/src/SparseLU/SparseLU_panel_bmod.h Eigen/src/SparseLU/SparseLU_panel_dfs.h Eigen/src/SparseLU/SparseLU_pivotL.h Eigen/src/SparseLU/SparseLU_pruneL.h Eigen/src/SparseLU/SparseLU_relax_snode.h Eigen/src/SparseLU/SparseLU_Structs.h Eigen/src/SparseLU/SparseLU_SupernodalMatrix.h Eigen/src/SparseLU/SparseLU_Utils.h Eigen/src/SparseLU/SparseLUImpl.h Eigen/src/SparseQR/SparseQR.h Eigen/src/SPQRSupport/SuiteSparseQRSupport.h Eigen/src/StlSupport/details.h Eigen/src/StlSupport/StdDeque.h Eigen/src/StlSupport/StdList.h Eigen/src/StlSupport/StdVector.h Eigen/src/SuperLUSupport/SuperLUSupport.h Eigen/src/SVD/BDCSVD.h Eigen/src/SVD/JacobiSVD.h Eigen/src/SVD/JacobiSVD_LAPACKE.h Eigen/src/SVD/SVDBase.h Eigen/src/SVD/UpperBidiagonalization.h Eigen/src/UmfPackSupport/UmfPackSupport.h mainwindow.h glwidget.h glew-1.10.0/include/GL/glew.h ui_mainwindow.h util/resourceloader.h openglshape.h gl/datatype/VBO.h gl/datatype/VBOAttribMarker.h gl/datatype/VAO.h gl/datatype/IBO.h gl/GLDebug.h collisionobject.h ground.h cubecollider.h planecollider.h $(DISTDIR)/
+	$(COPY_FILE) --parents main.cpp grid.cpp gridboundcollider.cpp gridnode.cpp mesh.cpp mpm.cpp particle.cpp mainwindow.cpp glwidget.cpp glew-1.10.0/src/glew.c scenefile.cpp util/resourceloader.cpp openglshape.cpp gl/datatype/VBO.cpp gl/datatype/VBOAttribMarker.cpp gl/datatype/VAO.cpp gl/datatype/IBO.cpp gl/GLDebug.cpp collisionobject.cpp ground.cpp cubecollider.cpp planecollider.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents mainwindow.ui $(DISTDIR)/
 
 
@@ -1284,6 +1296,8 @@ moc_mainwindow.cpp: /Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.fram
 		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
 		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h \
 		mpm.h \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/QString \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qstring.h \
 		mesh.h \
 		Eigen/StdVector \
 		Eigen/src/StlSupport/StdVector.h \
@@ -1293,9 +1307,11 @@ moc_mainwindow.cpp: /Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.fram
 		gridnode.h \
 		collisionobject.h \
 		ground.h \
+		gridboundcollider.h \
+		scenefile.h \
 		mainwindow.h \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/bin/moc
-	/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/mkspecs/macx-clang -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/src -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/glew-1.10.0/include -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtOpenGL.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtGui.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtXml.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/8.0.0/include -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include -F/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib mainwindow.h -o moc_mainwindow.cpp
+	/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/mkspecs/macx-clang -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/src -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/glew-1.10.0/include -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/rapidjson -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtOpenGL.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtGui.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtXml.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/8.0.0/include -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include -F/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib mainwindow.h -o moc_mainwindow.cpp
 
 moc_glwidget.cpp: glew-1.10.0/include/GL/glew.h \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtOpenGL.framework/Headers/QGLWidget \
@@ -1601,6 +1617,8 @@ moc_glwidget.cpp: glew-1.10.0/include/GL/glew.h \
 		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
 		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h \
 		mpm.h \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/QString \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qstring.h \
 		mesh.h \
 		Eigen/StdVector \
 		Eigen/src/StlSupport/StdVector.h \
@@ -1610,9 +1628,11 @@ moc_glwidget.cpp: glew-1.10.0/include/GL/glew.h \
 		gridnode.h \
 		collisionobject.h \
 		ground.h \
+		gridboundcollider.h \
+		scenefile.h \
 		glwidget.h \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/bin/moc
-	/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/mkspecs/macx-clang -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/src -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/glew-1.10.0/include -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtOpenGL.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtGui.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtXml.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/8.0.0/include -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include -F/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib glwidget.h -o moc_glwidget.cpp
+	/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/bin/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/mkspecs/macx-clang -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/src -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/glew-1.10.0/include -I/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/rapidjson -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtOpenGL.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtGui.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtXml.framework/Headers -I/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/8.0.0/include -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Users/jennasoenksen/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include -F/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib glwidget.h -o moc_glwidget.cpp
 
 compiler_moc_source_make_all:
 compiler_moc_source_clean:
@@ -1940,6 +1960,8 @@ main.o: main.cpp main.h \
 		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
 		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h \
 		ground.h \
+		gridboundcollider.h \
+		scenefile.h \
 		mainwindow.h \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers/QMainWindow \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers/qmainwindow.h \
@@ -2260,8 +2282,297 @@ grid.o: grid.cpp grid.h \
 		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
 		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h \
 		ground.h \
-		cubecollider.h
+		gridboundcollider.h \
+		scenefile.h \
+		cubecollider.h \
+		planecollider.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o grid.o grid.cpp
+
+gridboundcollider.o: gridboundcollider.cpp gridboundcollider.h \
+		collisionobject.h \
+		glm/glm.hpp \
+		glm/detail/_fixes.hpp \
+		glm/fwd.hpp \
+		glm/detail/type_int.hpp \
+		glm/detail/setup.hpp \
+		glm/detail/type_float.hpp \
+		glm/detail/type_vec.hpp \
+		glm/detail/precision.hpp \
+		glm/detail/type_mat.hpp \
+		glm/vec2.hpp \
+		glm/detail/type_vec2.hpp \
+		glm/detail/_swizzle.hpp \
+		glm/detail/_swizzle_func.hpp \
+		glm/detail/type_vec2.inl \
+		glm/vec3.hpp \
+		glm/detail/type_vec3.hpp \
+		glm/detail/type_vec3.inl \
+		glm/vec4.hpp \
+		glm/detail/type_vec4.hpp \
+		glm/detail/type_vec4.inl \
+		glm/mat2x2.hpp \
+		glm/detail/type_mat2x2.hpp \
+		glm/detail/type_mat2x2.inl \
+		glm/mat2x3.hpp \
+		glm/detail/type_mat2x3.hpp \
+		glm/detail/type_mat2x3.inl \
+		glm/mat2x4.hpp \
+		glm/detail/type_mat2x4.hpp \
+		glm/detail/type_mat2x4.inl \
+		glm/mat3x2.hpp \
+		glm/detail/type_mat3x2.hpp \
+		glm/detail/type_mat3x2.inl \
+		glm/mat3x3.hpp \
+		glm/detail/type_mat3x3.hpp \
+		glm/detail/type_mat3x3.inl \
+		glm/mat3x4.hpp \
+		glm/detail/type_mat3x4.hpp \
+		glm/detail/type_mat3x4.inl \
+		glm/mat4x2.hpp \
+		glm/detail/type_mat4x2.hpp \
+		glm/detail/type_mat4x2.inl \
+		glm/mat4x3.hpp \
+		glm/detail/type_mat4x3.hpp \
+		glm/detail/type_mat4x3.inl \
+		glm/mat4x4.hpp \
+		glm/detail/type_mat4x4.hpp \
+		glm/detail/type_mat4x4.inl \
+		glm/trigonometric.hpp \
+		glm/detail/func_trigonometric.hpp \
+		glm/detail/func_trigonometric.inl \
+		glm/detail/_vectorize.hpp \
+		glm/detail/type_vec1.hpp \
+		glm/detail/type_vec1.inl \
+		glm/exponential.hpp \
+		glm/detail/func_exponential.hpp \
+		glm/detail/func_exponential.inl \
+		glm/detail/func_vector_relational.hpp \
+		glm/detail/func_vector_relational.inl \
+		glm/common.hpp \
+		glm/detail/func_common.hpp \
+		glm/detail/func_common.inl \
+		glm/packing.hpp \
+		glm/detail/func_packing.hpp \
+		glm/detail/func_packing.inl \
+		glm/detail/type_half.hpp \
+		glm/detail/type_half.inl \
+		glm/geometric.hpp \
+		glm/detail/func_geometric.hpp \
+		glm/detail/func_geometric.inl \
+		glm/matrix.hpp \
+		glm/detail/func_matrix.hpp \
+		glm/detail/func_matrix.inl \
+		glm/vector_relational.hpp \
+		glm/integer.hpp \
+		glm/detail/func_integer.hpp \
+		glm/detail/func_integer.inl \
+		Eigen/Dense \
+		Eigen/Core \
+		Eigen/src/Core/util/DisableStupidWarnings.h \
+		Eigen/src/Core/util/Macros.h \
+		Eigen/src/Core/util/MKL_support.h \
+		Eigen/src/misc/blas.h \
+		Eigen/src/Core/util/Constants.h \
+		Eigen/src/Core/util/Meta.h \
+		Eigen/src/Core/util/ForwardDeclarations.h \
+		Eigen/src/Core/util/StaticAssert.h \
+		Eigen/src/Core/util/XprHelper.h \
+		Eigen/src/Core/util/Memory.h \
+		Eigen/src/Core/NumTraits.h \
+		Eigen/src/Core/MathFunctions.h \
+		Eigen/src/Core/GenericPacketMath.h \
+		Eigen/src/Core/MathFunctionsImpl.h \
+		Eigen/src/Core/arch/SSE/PacketMath.h \
+		Eigen/src/Core/arch/AVX/PacketMath.h \
+		Eigen/src/Core/arch/AVX512/PacketMath.h \
+		Eigen/src/Core/arch/AVX512/MathFunctions.h \
+		Eigen/src/Core/arch/SSE/Complex.h \
+		Eigen/src/Core/arch/SSE/MathFunctions.h \
+		Eigen/src/Core/arch/AVX/MathFunctions.h \
+		Eigen/src/Core/arch/AVX/Complex.h \
+		Eigen/src/Core/arch/AVX/TypeCasting.h \
+		Eigen/src/Core/arch/SSE/TypeCasting.h \
+		Eigen/src/Core/arch/AltiVec/PacketMath.h \
+		Eigen/src/Core/arch/AltiVec/MathFunctions.h \
+		Eigen/src/Core/arch/AltiVec/Complex.h \
+		Eigen/src/Core/arch/NEON/PacketMath.h \
+		Eigen/src/Core/arch/NEON/MathFunctions.h \
+		Eigen/src/Core/arch/NEON/Complex.h \
+		Eigen/src/Core/arch/ZVector/PacketMath.h \
+		Eigen/src/Core/arch/ZVector/MathFunctions.h \
+		Eigen/src/Core/arch/ZVector/Complex.h \
+		Eigen/src/Core/arch/CUDA/Half.h \
+		Eigen/src/Core/arch/CUDA/PacketMathHalf.h \
+		Eigen/src/Core/arch/CUDA/TypeCasting.h \
+		Eigen/src/Core/arch/CUDA/PacketMath.h \
+		Eigen/src/Core/arch/CUDA/MathFunctions.h \
+		Eigen/src/Core/arch/Default/Settings.h \
+		Eigen/src/Core/functors/TernaryFunctors.h \
+		Eigen/src/Core/functors/BinaryFunctors.h \
+		Eigen/src/Core/functors/UnaryFunctors.h \
+		Eigen/src/Core/functors/NullaryFunctors.h \
+		Eigen/src/Core/functors/StlFunctors.h \
+		Eigen/src/Core/functors/AssignmentFunctors.h \
+		Eigen/src/Core/arch/CUDA/Complex.h \
+		Eigen/src/Core/IO.h \
+		Eigen/src/Core/DenseCoeffsBase.h \
+		Eigen/src/Core/DenseBase.h \
+		Eigen/src/plugins/BlockMethods.h \
+		Eigen/src/Core/MatrixBase.h \
+		Eigen/src/plugins/CommonCwiseUnaryOps.h \
+		Eigen/src/plugins/CommonCwiseBinaryOps.h \
+		Eigen/src/plugins/MatrixCwiseUnaryOps.h \
+		Eigen/src/plugins/MatrixCwiseBinaryOps.h \
+		Eigen/src/Core/EigenBase.h \
+		Eigen/src/Core/Product.h \
+		Eigen/src/Core/CoreEvaluators.h \
+		Eigen/src/Core/AssignEvaluator.h \
+		Eigen/src/Core/Assign.h \
+		Eigen/src/Core/ArrayBase.h \
+		Eigen/src/plugins/ArrayCwiseUnaryOps.h \
+		Eigen/src/plugins/ArrayCwiseBinaryOps.h \
+		Eigen/src/Core/util/BlasUtil.h \
+		Eigen/src/Core/DenseStorage.h \
+		Eigen/src/Core/NestByValue.h \
+		Eigen/src/Core/ReturnByValue.h \
+		Eigen/src/Core/NoAlias.h \
+		Eigen/src/Core/PlainObjectBase.h \
+		Eigen/src/Core/Matrix.h \
+		Eigen/src/Core/Array.h \
+		Eigen/src/Core/CwiseTernaryOp.h \
+		Eigen/src/Core/CwiseBinaryOp.h \
+		Eigen/src/Core/CwiseUnaryOp.h \
+		Eigen/src/Core/CwiseNullaryOp.h \
+		Eigen/src/Core/CwiseUnaryView.h \
+		Eigen/src/Core/SelfCwiseBinaryOp.h \
+		Eigen/src/Core/Dot.h \
+		Eigen/src/Core/StableNorm.h \
+		Eigen/src/Core/Stride.h \
+		Eigen/src/Core/MapBase.h \
+		Eigen/src/Core/Map.h \
+		Eigen/src/Core/Ref.h \
+		Eigen/src/Core/Block.h \
+		Eigen/src/Core/VectorBlock.h \
+		Eigen/src/Core/Transpose.h \
+		Eigen/src/Core/DiagonalMatrix.h \
+		Eigen/src/Core/Diagonal.h \
+		Eigen/src/Core/DiagonalProduct.h \
+		Eigen/src/Core/Redux.h \
+		Eigen/src/Core/Visitor.h \
+		Eigen/src/Core/Fuzzy.h \
+		Eigen/src/Core/Swap.h \
+		Eigen/src/Core/CommaInitializer.h \
+		Eigen/src/Core/GeneralProduct.h \
+		Eigen/src/Core/Solve.h \
+		Eigen/src/Core/Inverse.h \
+		Eigen/src/Core/SolverBase.h \
+		Eigen/src/Core/PermutationMatrix.h \
+		Eigen/src/Core/Transpositions.h \
+		Eigen/src/Core/TriangularMatrix.h \
+		Eigen/src/Core/SelfAdjointView.h \
+		Eigen/src/Core/products/GeneralBlockPanelKernel.h \
+		Eigen/src/Core/products/Parallelizer.h \
+		Eigen/src/Core/ProductEvaluators.h \
+		Eigen/src/Core/products/GeneralMatrixVector.h \
+		Eigen/src/Core/products/GeneralMatrixMatrix.h \
+		Eigen/src/Core/SolveTriangular.h \
+		Eigen/src/Core/products/GeneralMatrixMatrixTriangular.h \
+		Eigen/src/Core/products/SelfadjointMatrixVector.h \
+		Eigen/src/Core/products/SelfadjointMatrixMatrix.h \
+		Eigen/src/Core/products/SelfadjointProduct.h \
+		Eigen/src/Core/products/SelfadjointRank2Update.h \
+		Eigen/src/Core/products/TriangularMatrixVector.h \
+		Eigen/src/Core/products/TriangularMatrixMatrix.h \
+		Eigen/src/Core/products/TriangularSolverMatrix.h \
+		Eigen/src/Core/products/TriangularSolverVector.h \
+		Eigen/src/Core/BandMatrix.h \
+		Eigen/src/Core/CoreIterators.h \
+		Eigen/src/Core/ConditionEstimator.h \
+		Eigen/src/Core/BooleanRedux.h \
+		Eigen/src/Core/Select.h \
+		Eigen/src/Core/VectorwiseOp.h \
+		Eigen/src/Core/Random.h \
+		Eigen/src/Core/Replicate.h \
+		Eigen/src/Core/Reverse.h \
+		Eigen/src/Core/ArrayWrapper.h \
+		Eigen/src/Core/products/GeneralMatrixMatrix_BLAS.h \
+		Eigen/src/Core/products/GeneralMatrixVector_BLAS.h \
+		Eigen/src/Core/products/GeneralMatrixMatrixTriangular_BLAS.h \
+		Eigen/src/Core/products/SelfadjointMatrixMatrix_BLAS.h \
+		Eigen/src/Core/products/SelfadjointMatrixVector_BLAS.h \
+		Eigen/src/Core/products/TriangularMatrixMatrix_BLAS.h \
+		Eigen/src/Core/products/TriangularMatrixVector_BLAS.h \
+		Eigen/src/Core/products/TriangularSolverMatrix_BLAS.h \
+		Eigen/src/Core/Assign_MKL.h \
+		Eigen/src/Core/GlobalFunctions.h \
+		Eigen/src/Core/util/ReenableStupidWarnings.h \
+		Eigen/LU \
+		Eigen/src/misc/Kernel.h \
+		Eigen/src/misc/Image.h \
+		Eigen/src/LU/FullPivLU.h \
+		Eigen/src/LU/PartialPivLU.h \
+		Eigen/src/misc/lapacke.h \
+		Eigen/src/misc/lapacke_mangling.h \
+		Eigen/src/LU/PartialPivLU_LAPACKE.h \
+		Eigen/src/LU/Determinant.h \
+		Eigen/src/LU/InverseImpl.h \
+		Eigen/src/LU/arch/Inverse_SSE.h \
+		Eigen/Cholesky \
+		Eigen/src/Cholesky/LLT.h \
+		Eigen/src/Cholesky/LDLT.h \
+		Eigen/src/Cholesky/LLT_LAPACKE.h \
+		Eigen/QR \
+		Eigen/Jacobi \
+		Eigen/src/Jacobi/Jacobi.h \
+		Eigen/Householder \
+		Eigen/src/Householder/Householder.h \
+		Eigen/src/Householder/HouseholderSequence.h \
+		Eigen/src/Householder/BlockHouseholder.h \
+		Eigen/src/QR/HouseholderQR.h \
+		Eigen/src/QR/FullPivHouseholderQR.h \
+		Eigen/src/QR/ColPivHouseholderQR.h \
+		Eigen/src/QR/CompleteOrthogonalDecomposition.h \
+		Eigen/src/QR/HouseholderQR_LAPACKE.h \
+		Eigen/src/QR/ColPivHouseholderQR_LAPACKE.h \
+		Eigen/SVD \
+		Eigen/src/misc/RealSvd2x2.h \
+		Eigen/src/SVD/UpperBidiagonalization.h \
+		Eigen/src/SVD/SVDBase.h \
+		Eigen/src/SVD/JacobiSVD.h \
+		Eigen/src/SVD/BDCSVD.h \
+		Eigen/src/SVD/JacobiSVD_LAPACKE.h \
+		Eigen/Geometry \
+		Eigen/src/Geometry/OrthoMethods.h \
+		Eigen/src/Geometry/EulerAngles.h \
+		Eigen/src/Geometry/Homogeneous.h \
+		Eigen/src/Geometry/RotationBase.h \
+		Eigen/src/Geometry/Rotation2D.h \
+		Eigen/src/Geometry/Quaternion.h \
+		Eigen/src/Geometry/AngleAxis.h \
+		Eigen/src/Geometry/Transform.h \
+		Eigen/src/Geometry/Translation.h \
+		Eigen/src/Geometry/Scaling.h \
+		Eigen/src/Geometry/Hyperplane.h \
+		Eigen/src/Geometry/ParametrizedLine.h \
+		Eigen/src/Geometry/AlignedBox.h \
+		Eigen/src/Geometry/Umeyama.h \
+		Eigen/src/Geometry/arch/Geometry_SSE.h \
+		Eigen/Eigenvalues \
+		Eigen/src/Eigenvalues/Tridiagonalization.h \
+		Eigen/src/Eigenvalues/RealSchur.h \
+		Eigen/src/Eigenvalues/HessenbergDecomposition.h \
+		Eigen/src/Eigenvalues/EigenSolver.h \
+		Eigen/src/Eigenvalues/SelfAdjointEigenSolver.h \
+		Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h \
+		Eigen/src/Eigenvalues/ComplexSchur.h \
+		Eigen/src/Eigenvalues/ComplexEigenSolver.h \
+		Eigen/src/Eigenvalues/RealQZ.h \
+		Eigen/src/Eigenvalues/GeneralizedEigenSolver.h \
+		Eigen/src/Eigenvalues/MatrixBaseEigenvalues.h \
+		Eigen/src/Eigenvalues/RealSchur_LAPACKE.h \
+		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
+		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o gridboundcollider.o gridboundcollider.cpp
 
 gridnode.o: gridnode.cpp gridnode.h \
 		Eigen/StdVector \
@@ -2610,6 +2921,8 @@ mesh.o: mesh.cpp mesh.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mesh.o mesh.cpp
 
 mpm.o: mpm.cpp mpm.h \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/QString \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qstring.h \
 		mesh.h \
 		Eigen/StdVector \
 		Eigen/Core \
@@ -2900,7 +3213,9 @@ mpm.o: mpm.cpp mpm.h \
 		Eigen/src/Eigenvalues/RealSchur_LAPACKE.h \
 		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
 		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h \
-		ground.h
+		ground.h \
+		gridboundcollider.h \
+		scenefile.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mpm.o mpm.cpp
 
 particle.o: particle.cpp particle.h \
@@ -3358,6 +3673,8 @@ mainwindow.o: mainwindow.cpp mainwindow.h \
 		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
 		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h \
 		mpm.h \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/QString \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qstring.h \
 		mesh.h \
 		Eigen/StdVector \
 		Eigen/src/StlSupport/StdVector.h \
@@ -3367,6 +3684,8 @@ mainwindow.o: mainwindow.cpp mainwindow.h \
 		gridnode.h \
 		collisionobject.h \
 		ground.h \
+		gridboundcollider.h \
+		scenefile.h \
 		ui_mainwindow.h \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/QSettings \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qsettings.h \
@@ -3679,6 +3998,8 @@ glwidget.o: glwidget.cpp glwidget.h \
 		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
 		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h \
 		mpm.h \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/QString \
+		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qstring.h \
 		mesh.h \
 		Eigen/StdVector \
 		Eigen/src/StlSupport/StdVector.h \
@@ -3688,6 +4009,8 @@ glwidget.o: glwidget.cpp glwidget.h \
 		gridnode.h \
 		collisionobject.h \
 		ground.h \
+		gridboundcollider.h \
+		scenefile.h \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers/QApplication \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtWidgets.framework/Headers/qapplication.h \
 		util/resourceloader.h \
@@ -3695,15 +4018,176 @@ glwidget.o: glwidget.cpp glwidget.h \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtGui.framework/Headers/qevent.h \
 		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtGui.framework/Headers/QWheelEvent \
 		gl/shaders/ShaderAttribLocations.h \
-		main.h \
-		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/QString \
-		/Users/jennasoenksen/Qt5.7.1/5.7/clang_64/lib/QtCore.framework/Headers/qstring.h
+		main.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o glwidget.o glwidget.cpp
 
 glew.o: glew-1.10.0/src/glew.c glew-1.10.0/include/GL/glew.h \
 		glew-1.10.0/include/GL/wglew.h \
 		glew-1.10.0/include/GL/glxew.h
 	$(CC) -c $(CFLAGS) $(INCPATH) -o glew.o glew-1.10.0/src/glew.c
+
+scenefile.o: scenefile.cpp scenefile.h \
+		Eigen/Core \
+		Eigen/src/Core/util/DisableStupidWarnings.h \
+		Eigen/src/Core/util/Macros.h \
+		Eigen/src/Core/util/MKL_support.h \
+		Eigen/src/misc/blas.h \
+		Eigen/src/Core/util/Constants.h \
+		Eigen/src/Core/util/Meta.h \
+		Eigen/src/Core/util/ForwardDeclarations.h \
+		Eigen/src/Core/util/StaticAssert.h \
+		Eigen/src/Core/util/XprHelper.h \
+		Eigen/src/Core/util/Memory.h \
+		Eigen/src/Core/NumTraits.h \
+		Eigen/src/Core/MathFunctions.h \
+		Eigen/src/Core/GenericPacketMath.h \
+		Eigen/src/Core/MathFunctionsImpl.h \
+		Eigen/src/Core/arch/SSE/PacketMath.h \
+		Eigen/src/Core/arch/AVX/PacketMath.h \
+		Eigen/src/Core/arch/AVX512/PacketMath.h \
+		Eigen/src/Core/arch/AVX512/MathFunctions.h \
+		Eigen/src/Core/arch/SSE/Complex.h \
+		Eigen/src/Core/arch/SSE/MathFunctions.h \
+		Eigen/src/Core/arch/AVX/MathFunctions.h \
+		Eigen/src/Core/arch/AVX/Complex.h \
+		Eigen/src/Core/arch/AVX/TypeCasting.h \
+		Eigen/src/Core/arch/SSE/TypeCasting.h \
+		Eigen/src/Core/arch/AltiVec/PacketMath.h \
+		Eigen/src/Core/arch/AltiVec/MathFunctions.h \
+		Eigen/src/Core/arch/AltiVec/Complex.h \
+		Eigen/src/Core/arch/NEON/PacketMath.h \
+		Eigen/src/Core/arch/NEON/MathFunctions.h \
+		Eigen/src/Core/arch/NEON/Complex.h \
+		Eigen/src/Core/arch/ZVector/PacketMath.h \
+		Eigen/src/Core/arch/ZVector/MathFunctions.h \
+		Eigen/src/Core/arch/ZVector/Complex.h \
+		Eigen/src/Core/arch/CUDA/Half.h \
+		Eigen/src/Core/arch/CUDA/PacketMathHalf.h \
+		Eigen/src/Core/arch/CUDA/TypeCasting.h \
+		Eigen/src/Core/arch/CUDA/PacketMath.h \
+		Eigen/src/Core/arch/CUDA/MathFunctions.h \
+		Eigen/src/Core/arch/Default/Settings.h \
+		Eigen/src/Core/functors/TernaryFunctors.h \
+		Eigen/src/Core/functors/BinaryFunctors.h \
+		Eigen/src/Core/functors/UnaryFunctors.h \
+		Eigen/src/Core/functors/NullaryFunctors.h \
+		Eigen/src/Core/functors/StlFunctors.h \
+		Eigen/src/Core/functors/AssignmentFunctors.h \
+		Eigen/src/Core/arch/CUDA/Complex.h \
+		Eigen/src/Core/IO.h \
+		Eigen/src/Core/DenseCoeffsBase.h \
+		Eigen/src/Core/DenseBase.h \
+		Eigen/src/plugins/BlockMethods.h \
+		Eigen/src/Core/MatrixBase.h \
+		Eigen/src/plugins/CommonCwiseUnaryOps.h \
+		Eigen/src/plugins/CommonCwiseBinaryOps.h \
+		Eigen/src/plugins/MatrixCwiseUnaryOps.h \
+		Eigen/src/plugins/MatrixCwiseBinaryOps.h \
+		Eigen/src/Core/EigenBase.h \
+		Eigen/src/Core/Product.h \
+		Eigen/src/Core/CoreEvaluators.h \
+		Eigen/src/Core/AssignEvaluator.h \
+		Eigen/src/Core/Assign.h \
+		Eigen/src/Core/ArrayBase.h \
+		Eigen/src/plugins/ArrayCwiseUnaryOps.h \
+		Eigen/src/plugins/ArrayCwiseBinaryOps.h \
+		Eigen/src/Core/util/BlasUtil.h \
+		Eigen/src/Core/DenseStorage.h \
+		Eigen/src/Core/NestByValue.h \
+		Eigen/src/Core/ReturnByValue.h \
+		Eigen/src/Core/NoAlias.h \
+		Eigen/src/Core/PlainObjectBase.h \
+		Eigen/src/Core/Matrix.h \
+		Eigen/src/Core/Array.h \
+		Eigen/src/Core/CwiseTernaryOp.h \
+		Eigen/src/Core/CwiseBinaryOp.h \
+		Eigen/src/Core/CwiseUnaryOp.h \
+		Eigen/src/Core/CwiseNullaryOp.h \
+		Eigen/src/Core/CwiseUnaryView.h \
+		Eigen/src/Core/SelfCwiseBinaryOp.h \
+		Eigen/src/Core/Dot.h \
+		Eigen/src/Core/StableNorm.h \
+		Eigen/src/Core/Stride.h \
+		Eigen/src/Core/MapBase.h \
+		Eigen/src/Core/Map.h \
+		Eigen/src/Core/Ref.h \
+		Eigen/src/Core/Block.h \
+		Eigen/src/Core/VectorBlock.h \
+		Eigen/src/Core/Transpose.h \
+		Eigen/src/Core/DiagonalMatrix.h \
+		Eigen/src/Core/Diagonal.h \
+		Eigen/src/Core/DiagonalProduct.h \
+		Eigen/src/Core/Redux.h \
+		Eigen/src/Core/Visitor.h \
+		Eigen/src/Core/Fuzzy.h \
+		Eigen/src/Core/Swap.h \
+		Eigen/src/Core/CommaInitializer.h \
+		Eigen/src/Core/GeneralProduct.h \
+		Eigen/src/Core/Solve.h \
+		Eigen/src/Core/Inverse.h \
+		Eigen/src/Core/SolverBase.h \
+		Eigen/src/Core/PermutationMatrix.h \
+		Eigen/src/Core/Transpositions.h \
+		Eigen/src/Core/TriangularMatrix.h \
+		Eigen/src/Core/SelfAdjointView.h \
+		Eigen/src/Core/products/GeneralBlockPanelKernel.h \
+		Eigen/src/Core/products/Parallelizer.h \
+		Eigen/src/Core/ProductEvaluators.h \
+		Eigen/src/Core/products/GeneralMatrixVector.h \
+		Eigen/src/Core/products/GeneralMatrixMatrix.h \
+		Eigen/src/Core/SolveTriangular.h \
+		Eigen/src/Core/products/GeneralMatrixMatrixTriangular.h \
+		Eigen/src/Core/products/SelfadjointMatrixVector.h \
+		Eigen/src/Core/products/SelfadjointMatrixMatrix.h \
+		Eigen/src/Core/products/SelfadjointProduct.h \
+		Eigen/src/Core/products/SelfadjointRank2Update.h \
+		Eigen/src/Core/products/TriangularMatrixVector.h \
+		Eigen/src/Core/products/TriangularMatrixMatrix.h \
+		Eigen/src/Core/products/TriangularSolverMatrix.h \
+		Eigen/src/Core/products/TriangularSolverVector.h \
+		Eigen/src/Core/BandMatrix.h \
+		Eigen/src/Core/CoreIterators.h \
+		Eigen/src/Core/ConditionEstimator.h \
+		Eigen/src/Core/BooleanRedux.h \
+		Eigen/src/Core/Select.h \
+		Eigen/src/Core/VectorwiseOp.h \
+		Eigen/src/Core/Random.h \
+		Eigen/src/Core/Replicate.h \
+		Eigen/src/Core/Reverse.h \
+		Eigen/src/Core/ArrayWrapper.h \
+		Eigen/src/Core/products/GeneralMatrixMatrix_BLAS.h \
+		Eigen/src/Core/products/GeneralMatrixVector_BLAS.h \
+		Eigen/src/Core/products/GeneralMatrixMatrixTriangular_BLAS.h \
+		Eigen/src/Core/products/SelfadjointMatrixMatrix_BLAS.h \
+		Eigen/src/Core/products/SelfadjointMatrixVector_BLAS.h \
+		Eigen/src/Core/products/TriangularMatrixMatrix_BLAS.h \
+		Eigen/src/Core/products/TriangularMatrixVector_BLAS.h \
+		Eigen/src/Core/products/TriangularSolverMatrix_BLAS.h \
+		Eigen/src/Core/Assign_MKL.h \
+		Eigen/src/Core/GlobalFunctions.h \
+		Eigen/src/Core/util/ReenableStupidWarnings.h \
+		rapidjson/document.h \
+		rapidjson/reader.h \
+		rapidjson/allocators.h \
+		rapidjson/rapidjson.h \
+		rapidjson/msinttypes/stdint.h \
+		rapidjson/msinttypes/inttypes.h \
+		rapidjson/stream.h \
+		rapidjson/encodings.h \
+		rapidjson/encodedstream.h \
+		rapidjson/memorystream.h \
+		rapidjson/internal/clzll.h \
+		rapidjson/internal/meta.h \
+		rapidjson/internal/stack.h \
+		rapidjson/internal/swap.h \
+		rapidjson/internal/strtod.h \
+		rapidjson/internal/ieee754.h \
+		rapidjson/internal/biginteger.h \
+		rapidjson/internal/diyfp.h \
+		rapidjson/internal/pow10.h \
+		rapidjson/error/error.h \
+		rapidjson/internal/strfunc.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o scenefile.o scenefile.cpp
 
 resourceloader.o: util/resourceloader.cpp util/resourceloader.h \
 		glew-1.10.0/include/GL/glew.h \
@@ -4599,6 +5083,292 @@ cubecollider.o: cubecollider.cpp cubecollider.h \
 		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
 		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o cubecollider.o cubecollider.cpp
+
+planecollider.o: planecollider.cpp planecollider.h \
+		collisionobject.h \
+		glm/glm.hpp \
+		glm/detail/_fixes.hpp \
+		glm/fwd.hpp \
+		glm/detail/type_int.hpp \
+		glm/detail/setup.hpp \
+		glm/detail/type_float.hpp \
+		glm/detail/type_vec.hpp \
+		glm/detail/precision.hpp \
+		glm/detail/type_mat.hpp \
+		glm/vec2.hpp \
+		glm/detail/type_vec2.hpp \
+		glm/detail/_swizzle.hpp \
+		glm/detail/_swizzle_func.hpp \
+		glm/detail/type_vec2.inl \
+		glm/vec3.hpp \
+		glm/detail/type_vec3.hpp \
+		glm/detail/type_vec3.inl \
+		glm/vec4.hpp \
+		glm/detail/type_vec4.hpp \
+		glm/detail/type_vec4.inl \
+		glm/mat2x2.hpp \
+		glm/detail/type_mat2x2.hpp \
+		glm/detail/type_mat2x2.inl \
+		glm/mat2x3.hpp \
+		glm/detail/type_mat2x3.hpp \
+		glm/detail/type_mat2x3.inl \
+		glm/mat2x4.hpp \
+		glm/detail/type_mat2x4.hpp \
+		glm/detail/type_mat2x4.inl \
+		glm/mat3x2.hpp \
+		glm/detail/type_mat3x2.hpp \
+		glm/detail/type_mat3x2.inl \
+		glm/mat3x3.hpp \
+		glm/detail/type_mat3x3.hpp \
+		glm/detail/type_mat3x3.inl \
+		glm/mat3x4.hpp \
+		glm/detail/type_mat3x4.hpp \
+		glm/detail/type_mat3x4.inl \
+		glm/mat4x2.hpp \
+		glm/detail/type_mat4x2.hpp \
+		glm/detail/type_mat4x2.inl \
+		glm/mat4x3.hpp \
+		glm/detail/type_mat4x3.hpp \
+		glm/detail/type_mat4x3.inl \
+		glm/mat4x4.hpp \
+		glm/detail/type_mat4x4.hpp \
+		glm/detail/type_mat4x4.inl \
+		glm/trigonometric.hpp \
+		glm/detail/func_trigonometric.hpp \
+		glm/detail/func_trigonometric.inl \
+		glm/detail/_vectorize.hpp \
+		glm/detail/type_vec1.hpp \
+		glm/detail/type_vec1.inl \
+		glm/exponential.hpp \
+		glm/detail/func_exponential.hpp \
+		glm/detail/func_exponential.inl \
+		glm/detail/func_vector_relational.hpp \
+		glm/detail/func_vector_relational.inl \
+		glm/common.hpp \
+		glm/detail/func_common.hpp \
+		glm/detail/func_common.inl \
+		glm/packing.hpp \
+		glm/detail/func_packing.hpp \
+		glm/detail/func_packing.inl \
+		glm/detail/type_half.hpp \
+		glm/detail/type_half.inl \
+		glm/geometric.hpp \
+		glm/detail/func_geometric.hpp \
+		glm/detail/func_geometric.inl \
+		glm/matrix.hpp \
+		glm/detail/func_matrix.hpp \
+		glm/detail/func_matrix.inl \
+		glm/vector_relational.hpp \
+		glm/integer.hpp \
+		glm/detail/func_integer.hpp \
+		glm/detail/func_integer.inl \
+		Eigen/Dense \
+		Eigen/Core \
+		Eigen/src/Core/util/DisableStupidWarnings.h \
+		Eigen/src/Core/util/Macros.h \
+		Eigen/src/Core/util/MKL_support.h \
+		Eigen/src/misc/blas.h \
+		Eigen/src/Core/util/Constants.h \
+		Eigen/src/Core/util/Meta.h \
+		Eigen/src/Core/util/ForwardDeclarations.h \
+		Eigen/src/Core/util/StaticAssert.h \
+		Eigen/src/Core/util/XprHelper.h \
+		Eigen/src/Core/util/Memory.h \
+		Eigen/src/Core/NumTraits.h \
+		Eigen/src/Core/MathFunctions.h \
+		Eigen/src/Core/GenericPacketMath.h \
+		Eigen/src/Core/MathFunctionsImpl.h \
+		Eigen/src/Core/arch/SSE/PacketMath.h \
+		Eigen/src/Core/arch/AVX/PacketMath.h \
+		Eigen/src/Core/arch/AVX512/PacketMath.h \
+		Eigen/src/Core/arch/AVX512/MathFunctions.h \
+		Eigen/src/Core/arch/SSE/Complex.h \
+		Eigen/src/Core/arch/SSE/MathFunctions.h \
+		Eigen/src/Core/arch/AVX/MathFunctions.h \
+		Eigen/src/Core/arch/AVX/Complex.h \
+		Eigen/src/Core/arch/AVX/TypeCasting.h \
+		Eigen/src/Core/arch/SSE/TypeCasting.h \
+		Eigen/src/Core/arch/AltiVec/PacketMath.h \
+		Eigen/src/Core/arch/AltiVec/MathFunctions.h \
+		Eigen/src/Core/arch/AltiVec/Complex.h \
+		Eigen/src/Core/arch/NEON/PacketMath.h \
+		Eigen/src/Core/arch/NEON/MathFunctions.h \
+		Eigen/src/Core/arch/NEON/Complex.h \
+		Eigen/src/Core/arch/ZVector/PacketMath.h \
+		Eigen/src/Core/arch/ZVector/MathFunctions.h \
+		Eigen/src/Core/arch/ZVector/Complex.h \
+		Eigen/src/Core/arch/CUDA/Half.h \
+		Eigen/src/Core/arch/CUDA/PacketMathHalf.h \
+		Eigen/src/Core/arch/CUDA/TypeCasting.h \
+		Eigen/src/Core/arch/CUDA/PacketMath.h \
+		Eigen/src/Core/arch/CUDA/MathFunctions.h \
+		Eigen/src/Core/arch/Default/Settings.h \
+		Eigen/src/Core/functors/TernaryFunctors.h \
+		Eigen/src/Core/functors/BinaryFunctors.h \
+		Eigen/src/Core/functors/UnaryFunctors.h \
+		Eigen/src/Core/functors/NullaryFunctors.h \
+		Eigen/src/Core/functors/StlFunctors.h \
+		Eigen/src/Core/functors/AssignmentFunctors.h \
+		Eigen/src/Core/arch/CUDA/Complex.h \
+		Eigen/src/Core/IO.h \
+		Eigen/src/Core/DenseCoeffsBase.h \
+		Eigen/src/Core/DenseBase.h \
+		Eigen/src/plugins/BlockMethods.h \
+		Eigen/src/Core/MatrixBase.h \
+		Eigen/src/plugins/CommonCwiseUnaryOps.h \
+		Eigen/src/plugins/CommonCwiseBinaryOps.h \
+		Eigen/src/plugins/MatrixCwiseUnaryOps.h \
+		Eigen/src/plugins/MatrixCwiseBinaryOps.h \
+		Eigen/src/Core/EigenBase.h \
+		Eigen/src/Core/Product.h \
+		Eigen/src/Core/CoreEvaluators.h \
+		Eigen/src/Core/AssignEvaluator.h \
+		Eigen/src/Core/Assign.h \
+		Eigen/src/Core/ArrayBase.h \
+		Eigen/src/plugins/ArrayCwiseUnaryOps.h \
+		Eigen/src/plugins/ArrayCwiseBinaryOps.h \
+		Eigen/src/Core/util/BlasUtil.h \
+		Eigen/src/Core/DenseStorage.h \
+		Eigen/src/Core/NestByValue.h \
+		Eigen/src/Core/ReturnByValue.h \
+		Eigen/src/Core/NoAlias.h \
+		Eigen/src/Core/PlainObjectBase.h \
+		Eigen/src/Core/Matrix.h \
+		Eigen/src/Core/Array.h \
+		Eigen/src/Core/CwiseTernaryOp.h \
+		Eigen/src/Core/CwiseBinaryOp.h \
+		Eigen/src/Core/CwiseUnaryOp.h \
+		Eigen/src/Core/CwiseNullaryOp.h \
+		Eigen/src/Core/CwiseUnaryView.h \
+		Eigen/src/Core/SelfCwiseBinaryOp.h \
+		Eigen/src/Core/Dot.h \
+		Eigen/src/Core/StableNorm.h \
+		Eigen/src/Core/Stride.h \
+		Eigen/src/Core/MapBase.h \
+		Eigen/src/Core/Map.h \
+		Eigen/src/Core/Ref.h \
+		Eigen/src/Core/Block.h \
+		Eigen/src/Core/VectorBlock.h \
+		Eigen/src/Core/Transpose.h \
+		Eigen/src/Core/DiagonalMatrix.h \
+		Eigen/src/Core/Diagonal.h \
+		Eigen/src/Core/DiagonalProduct.h \
+		Eigen/src/Core/Redux.h \
+		Eigen/src/Core/Visitor.h \
+		Eigen/src/Core/Fuzzy.h \
+		Eigen/src/Core/Swap.h \
+		Eigen/src/Core/CommaInitializer.h \
+		Eigen/src/Core/GeneralProduct.h \
+		Eigen/src/Core/Solve.h \
+		Eigen/src/Core/Inverse.h \
+		Eigen/src/Core/SolverBase.h \
+		Eigen/src/Core/PermutationMatrix.h \
+		Eigen/src/Core/Transpositions.h \
+		Eigen/src/Core/TriangularMatrix.h \
+		Eigen/src/Core/SelfAdjointView.h \
+		Eigen/src/Core/products/GeneralBlockPanelKernel.h \
+		Eigen/src/Core/products/Parallelizer.h \
+		Eigen/src/Core/ProductEvaluators.h \
+		Eigen/src/Core/products/GeneralMatrixVector.h \
+		Eigen/src/Core/products/GeneralMatrixMatrix.h \
+		Eigen/src/Core/SolveTriangular.h \
+		Eigen/src/Core/products/GeneralMatrixMatrixTriangular.h \
+		Eigen/src/Core/products/SelfadjointMatrixVector.h \
+		Eigen/src/Core/products/SelfadjointMatrixMatrix.h \
+		Eigen/src/Core/products/SelfadjointProduct.h \
+		Eigen/src/Core/products/SelfadjointRank2Update.h \
+		Eigen/src/Core/products/TriangularMatrixVector.h \
+		Eigen/src/Core/products/TriangularMatrixMatrix.h \
+		Eigen/src/Core/products/TriangularSolverMatrix.h \
+		Eigen/src/Core/products/TriangularSolverVector.h \
+		Eigen/src/Core/BandMatrix.h \
+		Eigen/src/Core/CoreIterators.h \
+		Eigen/src/Core/ConditionEstimator.h \
+		Eigen/src/Core/BooleanRedux.h \
+		Eigen/src/Core/Select.h \
+		Eigen/src/Core/VectorwiseOp.h \
+		Eigen/src/Core/Random.h \
+		Eigen/src/Core/Replicate.h \
+		Eigen/src/Core/Reverse.h \
+		Eigen/src/Core/ArrayWrapper.h \
+		Eigen/src/Core/products/GeneralMatrixMatrix_BLAS.h \
+		Eigen/src/Core/products/GeneralMatrixVector_BLAS.h \
+		Eigen/src/Core/products/GeneralMatrixMatrixTriangular_BLAS.h \
+		Eigen/src/Core/products/SelfadjointMatrixMatrix_BLAS.h \
+		Eigen/src/Core/products/SelfadjointMatrixVector_BLAS.h \
+		Eigen/src/Core/products/TriangularMatrixMatrix_BLAS.h \
+		Eigen/src/Core/products/TriangularMatrixVector_BLAS.h \
+		Eigen/src/Core/products/TriangularSolverMatrix_BLAS.h \
+		Eigen/src/Core/Assign_MKL.h \
+		Eigen/src/Core/GlobalFunctions.h \
+		Eigen/src/Core/util/ReenableStupidWarnings.h \
+		Eigen/LU \
+		Eigen/src/misc/Kernel.h \
+		Eigen/src/misc/Image.h \
+		Eigen/src/LU/FullPivLU.h \
+		Eigen/src/LU/PartialPivLU.h \
+		Eigen/src/misc/lapacke.h \
+		Eigen/src/misc/lapacke_mangling.h \
+		Eigen/src/LU/PartialPivLU_LAPACKE.h \
+		Eigen/src/LU/Determinant.h \
+		Eigen/src/LU/InverseImpl.h \
+		Eigen/src/LU/arch/Inverse_SSE.h \
+		Eigen/Cholesky \
+		Eigen/src/Cholesky/LLT.h \
+		Eigen/src/Cholesky/LDLT.h \
+		Eigen/src/Cholesky/LLT_LAPACKE.h \
+		Eigen/QR \
+		Eigen/Jacobi \
+		Eigen/src/Jacobi/Jacobi.h \
+		Eigen/Householder \
+		Eigen/src/Householder/Householder.h \
+		Eigen/src/Householder/HouseholderSequence.h \
+		Eigen/src/Householder/BlockHouseholder.h \
+		Eigen/src/QR/HouseholderQR.h \
+		Eigen/src/QR/FullPivHouseholderQR.h \
+		Eigen/src/QR/ColPivHouseholderQR.h \
+		Eigen/src/QR/CompleteOrthogonalDecomposition.h \
+		Eigen/src/QR/HouseholderQR_LAPACKE.h \
+		Eigen/src/QR/ColPivHouseholderQR_LAPACKE.h \
+		Eigen/SVD \
+		Eigen/src/misc/RealSvd2x2.h \
+		Eigen/src/SVD/UpperBidiagonalization.h \
+		Eigen/src/SVD/SVDBase.h \
+		Eigen/src/SVD/JacobiSVD.h \
+		Eigen/src/SVD/BDCSVD.h \
+		Eigen/src/SVD/JacobiSVD_LAPACKE.h \
+		Eigen/Geometry \
+		Eigen/src/Geometry/OrthoMethods.h \
+		Eigen/src/Geometry/EulerAngles.h \
+		Eigen/src/Geometry/Homogeneous.h \
+		Eigen/src/Geometry/RotationBase.h \
+		Eigen/src/Geometry/Rotation2D.h \
+		Eigen/src/Geometry/Quaternion.h \
+		Eigen/src/Geometry/AngleAxis.h \
+		Eigen/src/Geometry/Transform.h \
+		Eigen/src/Geometry/Translation.h \
+		Eigen/src/Geometry/Scaling.h \
+		Eigen/src/Geometry/Hyperplane.h \
+		Eigen/src/Geometry/ParametrizedLine.h \
+		Eigen/src/Geometry/AlignedBox.h \
+		Eigen/src/Geometry/Umeyama.h \
+		Eigen/src/Geometry/arch/Geometry_SSE.h \
+		Eigen/Eigenvalues \
+		Eigen/src/Eigenvalues/Tridiagonalization.h \
+		Eigen/src/Eigenvalues/RealSchur.h \
+		Eigen/src/Eigenvalues/HessenbergDecomposition.h \
+		Eigen/src/Eigenvalues/EigenSolver.h \
+		Eigen/src/Eigenvalues/SelfAdjointEigenSolver.h \
+		Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h \
+		Eigen/src/Eigenvalues/ComplexSchur.h \
+		Eigen/src/Eigenvalues/ComplexEigenSolver.h \
+		Eigen/src/Eigenvalues/RealQZ.h \
+		Eigen/src/Eigenvalues/GeneralizedEigenSolver.h \
+		Eigen/src/Eigenvalues/MatrixBaseEigenvalues.h \
+		Eigen/src/Eigenvalues/RealSchur_LAPACKE.h \
+		Eigen/src/Eigenvalues/ComplexSchur_LAPACKE.h \
+		Eigen/src/Eigenvalues/SelfAdjointEigenSolver_LAPACKE.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o planecollider.o planecollider.cpp
 
 moc_mainwindow.o: moc_mainwindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_mainwindow.o moc_mainwindow.cpp

@@ -59,7 +59,8 @@ SOURCES += main.cpp \
     gl/GLDebug.cpp \
     collisionobject.cpp \
     ground.cpp \
-    cubecollider.cpp
+    cubecollider.cpp \
+    planecollider.cpp
 
 HEADERS += \
     grid.h \
@@ -384,7 +385,8 @@ HEADERS += \
     gl/GLDebug.h \
     collisionobject.h \
     ground.h \
-    cubecollider.h
+    cubecollider.h \
+    planecollider.h
 
 FORMS += \
     mainwindow.ui
