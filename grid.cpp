@@ -31,7 +31,7 @@ Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, Hyperparameter
         pair<Vector3f, Vector3f> gridBounds = findGridBoundaries(boundingPoints.first, boundingPoints.second, _groundHeight);
         initGrid(gridBounds.first, gridBounds.second);
     } else {
-        Vector3f cushion = Vector3f(m_gridSpacing * 2, m_gridSpacing * 2, m_gridSpacing * 2);
+        Vector3f cushion = Vector3f(m_gridSpacing, m_gridSpacing, m_gridSpacing);
         Vector3f cushionMin = gridInfo.gridMin + cushion;
         Vector3f cushionMax = gridInfo.gridMax + cushion;
         m_gridBounds = pair<Vector3f, Vector3f>(gridInfo.gridMin, gridInfo.gridMax);
@@ -127,10 +127,6 @@ void Grid::initGrid(Vector3f min, Vector3f max) {
     // Not sure if it's supposed to be one node at every single intersection of not?)
     cout << "Grid minimum: " << min.transpose() << endl;
     cout << "Grid maximum: " << max.transpose() << endl;
-
-    // TODO custom mu?
-    //Vector3f cushion = Vector3f(m_gridSpacing * 2, m_gridSpacing * 2, m_gridSpacing * 2);
-    //m_colliders.push_back(new GridBoundCollider(min + cushion, max - cushion, 0.6));
 
     for (int w = 0; w < m_gridWidth; w++) {
         for (int h = 0; h < m_gridHeight; h++) {
@@ -330,6 +326,9 @@ void Grid::computeGridForces(int thread, int numThreads)
         GridNode* curr = m_nodes[n];
         Vector3f sum = Vector3f::Zero();
         for (unsigned int p = 0; p < m_particles.size(); p++) {
+            Vector3f del_w = weightGradientDelOmega(m_particles[p]->getPosition(), curr->getPosition());
+            if (del_w == Vector3f::Zero())
+                continue;
 
             Matrix3f F_p = m_particles[p]->getPlasticDeformation();
 
@@ -338,11 +337,8 @@ void Grid::computeGridForces(int thread, int numThreads)
 
             //float V_p = J_p * m_particles[p]->getVolume()
             float V_p = m_particles[p]->getVolume();
-            Vector3f del_w = weightGradientDelOmega(m_particles[p]->getPosition(), curr->getPosition());
             Matrix3f stress = computeStress(F_e, F_p);
 
-//            if (p == 1000 && curr->getVelocity().norm() > 0)
-//                debug("Stress: ", stress);
             Vector3f force = V_p * stress * del_w;
             sum += force;
         }
