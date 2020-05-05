@@ -11,9 +11,19 @@ struct GridInfo {
     Vector3f gridMin;
     Vector3f gridMax;
     float gridSpacing;
+    Vector3f initialVelocity;
+    Vector3f gravity;
+    float groundHeight;
 };
 
-
+struct HyperparameterInfo {
+    float criticalCompression;
+    float criticalStretch;
+    float youngsModulus;
+    float hardeningCoefficient;
+    float poissonsRatio;
+    float density;
+};
 
 class SceneFile
 {
@@ -28,11 +38,23 @@ public:
     static int defaultFrames();
     float getStepLength();
     static float defaultStepLength();
+
     bool getDebugStepTimes();
     int getDebugParticles();
 
     GridInfo getGridInfo();
-    static GridInfo defaultGridInfo();
+    static GridInfo defaultGridInfo() {
+        return GridInfo {
+            Vector3f::Zero(), Vector3f::Zero(), 0.035, Vector3f(0, 0, 0), Vector3f(0, 0, 0), -0.5
+        };
+    };
+
+    HyperparameterInfo getHyperparameterInfo();
+    static HyperparameterInfo defaultHyperparameterInfo() {
+        return HyperparameterInfo {
+            2.5E-2, 7.5E-3, 1.4E5, 10, 0.2, 400
+        };
+    };
 
 private:
     string m_object;
@@ -44,6 +66,7 @@ private:
     int m_debugParticles;
 
     GridInfo m_gridInfo;
+    HyperparameterInfo m_hyperparameterInfo;
 
 };
 

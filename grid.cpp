@@ -7,22 +7,19 @@
 #include "planecollider.h"
 #include <Eigen/SVD>
 
-// DEFINE PARAMETERS HERE
-const float _targetDensity = 400.f;
-const Vector3f _initParticleVelocity(-0.5,0,0);
-// const float _gridSpacing = 0.035; // Shouldn't be less than 0.001 (in meters)
-const Vector3f _gravity(0, -1, 0); // Should be -10 for Earth gravity
-const float _groundHeight = -0.2; // Location of the ground plane (in meters)
-
-// TODO Make these optional command line arguments
-const float criticalCompression = 2.5E-2;
-const float criticalStretch = 7.5E-3;
-const float _Eo = 1.4E5; // Initial Young's Modulus
-const float _v = 0.2; // Poisson's ratio
-const float _hardening = 10; // Hardening coefficient
-
-Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo)
+Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, HyperparameterInfo hyperparamaterInfo)
 {
+    _initParticleVelocity = gridInfo.initialVelocity;
+    _gravity = gridInfo.gravity;
+    _groundHeight = gridInfo.groundHeight;
+
+    _criticalCompression = hyperparamaterInfo.criticalCompression;
+    _criticalStretch = hyperparamaterInfo.criticalStretch;
+    _Eo = hyperparamaterInfo.youngsModulus;
+    _v = hyperparamaterInfo.poissonsRatio;
+    _hardening = hyperparamaterInfo.hardeningCoefficient;
+    _targetDensity = hyperparamaterInfo.density;
+
     m_gridSpacing = gridInfo.gridSpacing;
     snowMesh.buildBoundingBox();
     vector<Vector3f> points = pointsFromMesh(snowMesh, numParticles);
@@ -482,7 +479,7 @@ void Grid::calculateDeformationGradient(float delta_t)
         // singularValues() returns an array of the singular values.
         Vector3f sigma = svd.singularValues();
         for (int j = 0; j < 3; j++) {   //Clamp Sigma's diagonal values
-           sigma[j] = std::min(std::max(sigma[j], 1-criticalCompression), 1+criticalStretch);
+           sigma[j] = std::min(std::max(sigma[j], 1-_criticalCompression), 1+_criticalStretch);
         }
         // Turn sigma into a matrix
         Matrix3f matSigma = sigma.asDiagonal();

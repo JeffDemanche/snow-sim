@@ -16,7 +16,7 @@ using namespace std;
 class Grid
 {
 public:
-    Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo);
+    Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, HyperparameterInfo hyperparamaterInfo);
     ~Grid();
 
     void setCurrentFrame(int currentFrame);
@@ -113,6 +113,17 @@ private:
     std::vector<CollisionObject*> m_colliders;
     int m_currentFrame;
     float m_particleMass;
+
+    Vector3f _initParticleVelocity = Vector3f(-0.5,0,0);
+    Vector3f _gravity = Vector3f(0, -1, 0); // Should be -10 for Earth gravity
+    float _groundHeight = -0.2; // Location of the ground plane (in meters)
+
+    float _criticalCompression = 2.5E-2;
+    float _criticalStretch = 7.5E-3;
+    float _Eo = 1.4E5; // Initial Young's Modulus
+    float _v = 0.2; // Poisson's ratio
+    float _hardening = 10; // Hardening coefficient
+    float _targetDensity = 400.f;
 
     /**
      * Initializes all colliding objects in the scene

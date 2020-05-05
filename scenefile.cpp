@@ -30,25 +30,41 @@ SceneFile::SceneFile(string sceneFile)
     if(jsonDoc.HasMember("grid")) {
         Value gridObj = jsonDoc["grid"].GetObject();
 
+        Vector3f gridMin(gridObj["gridMin"].GetArray()[0].GetFloat(),
+                         gridObj["gridMin"].GetArray()[1].GetFloat(),
+                         gridObj["gridMin"].GetArray()[2].GetFloat());
+        Vector3f gridMax(gridObj["gridMax"].GetArray()[0].GetFloat(),
+                         gridObj["gridMax"].GetArray()[1].GetFloat(),
+                         gridObj["gridMax"].GetArray()[2].GetFloat());
         float gridSpacing = gridObj["gridSpacing"].GetFloat();
-        if (!gridObj.HasMember("gridMin") || !gridObj.HasMember("gridMax")) {
-            m_gridInfo = GridInfo {
-                Vector3f::Zero(), Vector3f::Zero(), gridSpacing
-            };
-        }
-        else {
-            Vector3f gridMin(gridObj["gridMin"].GetArray()[0].GetFloat(),
-                             gridObj["gridMin"].GetArray()[1].GetFloat(),
-                             gridObj["gridMin"].GetArray()[2].GetFloat());
-            Vector3f gridMax(gridObj["gridMax"].GetArray()[0].GetFloat(),
-                             gridObj["gridMax"].GetArray()[1].GetFloat(),
-                             gridObj["gridMax"].GetArray()[2].GetFloat());
-            m_gridInfo = GridInfo {
-                gridMin, gridMax, gridSpacing
-            };
-        }
+        Vector3f initialVelocity(gridObj["initialVelocity"].GetArray()[0].GetFloat(),
+                                 gridObj["initialVelocity"].GetArray()[1].GetFloat(),
+                                 gridObj["initialVelocity"].GetArray()[2].GetFloat());
+        Vector3f gravity(gridObj["gravity"].GetArray()[0].GetFloat(),
+                         gridObj["gravity"].GetArray()[1].GetFloat(),
+                         gridObj["gravity"].GetArray()[2].GetFloat());
+        float groundHeight = gridObj["groundHeight"].GetFloat();
+
+        m_gridInfo = GridInfo {
+            gridMin, gridMax, gridSpacing, initialVelocity, gravity, groundHeight
+        };
     } else {
         m_gridInfo = defaultGridInfo();
+    }
+
+    if (jsonDoc.HasMember("hyperparameters")) {
+        Value hypObj = jsonDoc["hyperparameters"].GetObject();
+
+        m_hyperparameterInfo = HyperparameterInfo {
+            hypObj["criticalCompression"].GetFloat(),
+            hypObj["criticalStretch"].GetFloat(),
+            hypObj["youngsModulus"].GetFloat(),
+            hypObj["hardeningCoefficient"].GetFloat(),
+            hypObj["poissonsRatio"].GetFloat(),
+            hypObj["density"].GetFloat()
+        };
+    } else {
+        m_hyperparameterInfo = defaultHyperparameterInfo();
     }
 }
 
@@ -96,8 +112,6 @@ GridInfo SceneFile::getGridInfo() {
     return m_gridInfo;
 }
 
-GridInfo SceneFile::defaultGridInfo() {
-    return GridInfo {
-        Vector3f::Zero(), Vector3f::Zero(), 0.035
-    };
+HyperparameterInfo SceneFile::getHyperparameterInfo() {
+    return m_hyperparameterInfo;
 }

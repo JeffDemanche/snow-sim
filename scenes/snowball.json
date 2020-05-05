@@ -6,9 +6,22 @@
   "debugStepTimes": true,
   "debugParticles": 1,
 
+
   "grid": {
     "gridMin": [-0.385, -1.43444, -0.42],
     "gridMax": [0.385, 0.245564, 0.42],
-    "gridSpacing": 0.06
+    "gridSpacing": 0.06,
+    "initialVelocity": [0, 0, 0],
+    "gravity": [0, -1, 0],
+    "groundHeight": -0.2
+  },
+
+  "hyperparameters": {
+    "criticalCompression": 2.5E-2,
+    "criticalStretch": 7.5E-3,
+    "youngsModulus": 1.4E5,
+    "hardeningCoefficient": 10,
+    "poissonsRatio": 0.2,
+    "density": 400
   }
 }
