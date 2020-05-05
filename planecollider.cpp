@@ -11,17 +11,31 @@ PlaneCollider::PlaneCollider(Vector3f point, Vector3f normal, float u) : Collisi
 
 bool PlaneCollider::insideObject(Vector3f pos) {
     if (m_normal.x() != 0) {
-        if (m_normal.x() > 0) {
+        if (m_normal.x() > 0) { // Left wall
             return (pos.x() <= m_point.x());
         }
-        if (m_normal.x() < 0) {
+        if (m_normal.x() < 0) { // Right wall
             return (pos.x() >= m_point.x());
         }
     }
+
     if (m_normal.y() != 0) {
-        return (pos.y() <= m_point.y());
+        if (m_normal.y() > 0) { // Floor
+            return (pos.y() <= m_point.y());
+        }
+        if (m_normal.y() < 0) { // Ceiling
+            return (pos.y() >= m_point.y());
+        }
     }
-    // TODO FINISH
+
+    if (m_normal.z() != 0) {
+        if (m_normal.z() > 0) {
+            return (pos.z() <= m_point.z());
+        }
+        if (m_normal.z() < 0) {
+            return (pos.z() >= m_point.z());
+        }
+    }
 }
 
 Vector3f PlaneCollider::normalAt(Vector3f pos) {
