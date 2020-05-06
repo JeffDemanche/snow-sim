@@ -34,17 +34,20 @@ public:
     /**
      * Step 1. Calculates the grid mass values based on particles.
      */
-    void computeGridMass();
+    void computeGridMass(int thread, int numThreads);
+    thread computeGridMassThread(int t, int numThreads);
 
     /**
      * Step 1. Calculates the grid velocity values based on particles.
      */
-    void computeGridVelocity();
+    void computeGridVelocity(int thread, int numThreads);
+    thread computeGridVelocityThread(int t, int numThreads);
 
     /**
      * Step 2. Calculates the volumes for each particle.
      */
-    void computeParticleVolumes();
+    void computeParticleVolumes(int t, int numThreads);
+    thread computeParticleVolumesThread(int t, int numThreads);
 
     /**
      * Step 3. Calculates forces acting at grid points.
@@ -55,12 +58,14 @@ public:
     /**
      * Step 4. Calculates updated grid velocities.
      */
-    void updateGridVelocities(float delta_t);
+    void updateGridVelocities(float delta_t, int thread, int numThreads);
+    thread updateGridVelocitiesThread(float delta_t, int t, int numThreads);
 
     /**
      * Step 5. Temporary grid node velocity is updated with grid-based body collision.
      */
-    void gridCollision();
+    void gridCollision(int thread, int numThreads);
+    thread gridCollisionThread(int t, int numThreads);
 
     /**
      * Step 6: Explicit integrator
@@ -75,17 +80,20 @@ public:
     /**
      * Step 7. Update deformation gradient for particles.
      */
-    void calculateDeformationGradient(float delta_t);
+    void calculateDeformationGradient(float delta_t, int thread, int numThreads);
+    thread calculateDeformationGradientThread(float delta_t, int t, int numThreads);
 
     /**
      * Step 8. Update particle velocities after doing the grid work.
      */
-    void updateParticleVelocities();
+    void updateParticleVelocities(int thread, int numThreads);
+    thread updateParticleVelocitiesThread(int t, int numThreads);
 
     /**
      * Step 9. Particle-based body collisions
      */
-    void particleCollision();
+    void particleCollision(int thread, int numThreads);
+    thread particleCollisionThread(int t, int numThreads);
 
     /**
      * Step 10. Update particle positions.

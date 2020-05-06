@@ -192,10 +192,10 @@ pair<Vector3f, Vector3f> Grid::getGridBounds() {
     return m_gridBounds;
 }
 
-void Grid::computeGridMass()
+void Grid::computeGridMass(int thread, int numThreads)
 {
     // Step 1. See eq. 3.1 from the masters doc
-    for (unsigned int n = 0; n < m_nodes.size(); n++) {
+    for (unsigned int n = thread; n < m_nodes.size(); n += numThreads) {
         Vector3f gridNodePos = m_nodes[n]->getPosition();
         for (unsigned int p = 0; p < m_particles.size(); p++) {
             Vector3f particlePos = m_particles[p]->getPosition();
@@ -208,6 +208,10 @@ void Grid::computeGridMass()
             m_nodes[n]->setMass(m_nodes[n]->getMass() + particleContribution);
         }
     }
+}
+
+thread Grid::computeGridMassThread(int t, int numThreads) {
+    return thread(&Grid::computeGridMass, this, t, numThreads);
 }
 
 float Grid::weightFunctionN(float x) {
@@ -265,18 +269,15 @@ Matrix3f Grid::velocityGradient(Particle* p) {
     Matrix3f velGrad = Matrix3f::Zero();
 
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
-//        if (p->getIndex() == 1000 && weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).norm() > 0)
-//            debug("new vel: ", m_nodes[i]->getNewVelocity());
         velGrad += m_nodes[i]->getNewVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
     }
     return velGrad;
 }
 
-void Grid::computeGridVelocity()
+void Grid::computeGridVelocity(int thread, int numThreads)
 {
     // Step 1. See eq. 3.6 from the masters doc (this requires using the calculated mass, so do that first).
-    bool nanCheck = false;
-    for (unsigned int p = 0; p < m_particles.size(); p++) {
+    for (unsigned int p = thread; p < m_particles.size(); p += numThreads) {
 
         Vector3f particlePos = m_particles[p]->getPosition();
 
@@ -294,17 +295,18 @@ void Grid::computeGridVelocity()
             }
             Vector3f newVelocity = m_nodes[n]->getVelocity() + particleContribution;
             m_nodes[n]->setVelocity(newVelocity);
-
-            if (isnan(newVelocity.x()) || isnan(newVelocity.y()) || isnan(newVelocity.z()))
-                cerr << "Step 1: GRID VELOCITY IS NAN" << endl;
         }
     }
 }
 
-void Grid::computeParticleVolumes()
+thread Grid::computeGridVelocityThread(int t, int numThreads) {
+    return thread(&Grid::computeGridVelocity, this, t, numThreads);
+}
+
+void Grid::computeParticleVolumes(int t, int numThreads)
 {
     // Step 2. See eq. 3.8. I think this only needs to be done once for the whole simulation.
-    for (size_t p = 0; p < m_particles.size(); p++) {
+    for (size_t p = t; p < m_particles.size(); p += numThreads) {
         Particle* particle = m_particles[p];
 
         float particleDensity = 0;
@@ -317,11 +319,14 @@ void Grid::computeParticleVolumes()
     }
 }
 
+thread Grid::computeParticleVolumesThread(int t, int numThreads) {
+    return thread(&Grid::computeParticleVolumes, this, t, numThreads);
+}
+
 void Grid::computeGridForces(int thread, int numThreads)
 {
     // Step 3. See eq. 3.9. Do we need to compute the deformation gradient prior to this happening?
     // For grid nodes within range
-    bool nanCheck = false;
     for (unsigned int n = thread; n < m_nodes.size(); n += numThreads) {
         GridNode* curr = m_nodes[n];
         Vector3f sum = Vector3f::Zero();
@@ -342,13 +347,10 @@ void Grid::computeGridForces(int thread, int numThreads)
             Vector3f force = V_p * stress * del_w;
             sum += force;
         }
-        nanCheck = (isnan(sum.x()) || isnan(sum.y()) || isnan(sum.z()));
         Vector3f force = -1 * sum;
 
         curr->setForce(force);
     }
-    if (nanCheck)
-        cerr << "Step 3: GRID FORCE IS NAN" << endl;
 }
 
 thread Grid::computeGridForcesThread(int t, int numThreads) {
@@ -389,29 +391,28 @@ float Grid::mu(Matrix3f Fp, float Jp) {
     return fmin(result, mu_o);
 }
 
-void Grid::updateGridVelocities(float delta_t)
+void Grid::updateGridVelocities(float delta_t, int thread, int numThreads)
 {
     // Step 4. See eq. 3.16. This updates velocities using forces we calculated last step.
-    bool nanCheck = false;
-    for (unsigned int i = 0; i < m_nodes.size(); i++) {
+    for (unsigned int i = thread; i < m_nodes.size(); i += numThreads) {
         GridNode* curr = m_nodes[i];
         Vector3f v_star(0, 0, 0);
         if (curr->getMass() > 0) {
             v_star = curr->getVelocity() + delta_t * (1.f / curr->getMass()) * (curr->getForce() + _gravity * curr->getMass());
         }
 
-        nanCheck = (isnan(v_star.x()) || isnan(v_star.y()) || isnan(v_star.z()));
         curr->setNewVelocity(v_star);
     }
-    if (nanCheck)
-        cerr << "Step 4: UPDATED GRID VELOCITY IS NAN" << endl;
 }
 
-void Grid::gridCollision()
+thread Grid::updateGridVelocitiesThread(float delta_t, int t, int numThreads) {
+    return thread(&Grid::updateGridVelocities, this, delta_t, t, numThreads);
+}
+
+void Grid::gridCollision(int thread, int numThreads)
 {
     // Step 5. See eq. 3.17.
-    bool nanCheck = false;
-    for (unsigned int i = 0; i < m_nodes.size(); i++) {
+    for (unsigned int i = thread; i < m_nodes.size(); i += numThreads) {
         if (m_nodes[i]->getMass() > 0) {
             // Loop through all colliders in the scene
             for (unsigned int c = 0; c < m_colliders.size(); c++) {
@@ -436,14 +437,15 @@ void Grid::gridCollision()
                         }
                     }
                     Vector3f v_prime = v_rel_prime + collider->getVelocity(); // Transform relative velocity back to world coords
-                    nanCheck = (isnan(v_prime.x()) || isnan(v_prime.y()) || isnan(v_prime.z()));
                     m_nodes[i]->setNewVelocity(v_prime);
                 }
             }
         }
     }
-    if (nanCheck)
-        cerr << "Step 5: UPDATED GRID VELOCITY (AFTER COLILISION) IS NAN" << endl;
+}
+
+thread Grid::gridCollisionThread(int t, int numThreads) {
+    return thread(&Grid::gridCollision, this, t, numThreads);
 }
 
 void Grid::explicitSolver()
@@ -459,10 +461,10 @@ void Grid::implicitSolver()
     // TODO Step 6. See Algorithm 1. This will likely require a lot of calculating grid node values.
 }
 
-void Grid::calculateDeformationGradient(float delta_t)
+void Grid::calculateDeformationGradient(float delta_t, int thread, int numThreads)
 {
     // Step 7. See eq. 3.33 / 3.34
-    for (unsigned int p = 0; p < m_particles.size(); p++) {
+    for (unsigned int p = thread; p < m_particles.size(); p += numThreads) {
         Particle* particle = m_particles[p];
         Matrix3f tempElastic = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle->getElasticDeformation();
         Matrix3f tempF = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle->getDeformationGradient();
@@ -485,13 +487,17 @@ void Grid::calculateDeformationGradient(float delta_t)
     }
 }
 
-void Grid::updateParticleVelocities()
+thread Grid::calculateDeformationGradientThread(float delta_t, int t, int numThreads) {
+    return thread(&Grid::calculateDeformationGradient, this, delta_t, t, numThreads);
+}
+
+void Grid::updateParticleVelocities(int thread, int numThreads)
 {
     // TODO Step 8. See eq. 3.35.
     // In the paper they say "we typically used alpha=0.95" so IDK.
     float alpha = 0.95;
 
-    for (unsigned int p = 0; p < m_particles.size(); p++) {
+    for (unsigned int p = thread; p < m_particles.size(); p += numThreads) {
         Particle* particle = m_particles[p];
 
         Vector3f v_PIC = Vector3f::Zero();
@@ -499,6 +505,10 @@ void Grid::updateParticleVelocities()
 
         for (unsigned int i = 0; i < m_nodes.size(); i++) {
             float weight = weightN(particle->getPosition(), m_nodes[i]->getPosition());
+            if (weight == 0){
+                continue;
+            }
+
             v_PIC += m_nodes[i]->getNewVelocity() * weight;
             v_FLIP += (m_nodes[i]->getNewVelocity() - m_nodes[i]->getVelocity()) * weight;
         }
@@ -506,10 +516,14 @@ void Grid::updateParticleVelocities()
     }
 }
 
-void Grid::particleCollision()
+thread Grid::updateParticleVelocitiesThread(int t, int numThreads) {
+    return thread(&Grid::updateParticleVelocities, this, t, numThreads);
+}
+
+void Grid::particleCollision(int thread, int numThreads)
 {
     // Step 9. See eq. 3.17.
-    for (unsigned int i = 0; i < m_particles.size(); i++) {
+    for (unsigned int i = thread; i < m_particles.size(); i += numThreads) {
         // Loop through all colliders in the scene
         for (unsigned int c = 0; c < m_colliders.size(); c++) {
             CollisionObject* collider = m_colliders[c];
@@ -533,29 +547,24 @@ void Grid::particleCollision()
                 }
                 Vector3f v_prime = v_rel_prime + collider->getVelocity(); // Transform relative velocity back to world coords
 
-
                 m_particles[i]->setVelocity(v_prime);
             }
         }
     }
 }
 
+thread Grid::particleCollisionThread(int t, int numThreads) {
+    return thread(&Grid::particleCollision, this, t, numThreads);
+}
+
 void Grid::updateParticlePositions(float delta_t)
 {
     // Step 10. Eq. 3.36. Simple time step to finish.
-    bool nanCheck = false;
     m_points.clear();
     for (unsigned int p = 0; p < m_particles.size(); p++) {
-        //if (!outOfBounds(m_particles[p])) {
-            m_particles[p]->setPosition(m_particles[p]->getPosition() + delta_t * m_particles[p]->getVelocity());
-        //} else {
-        //    cout << "particle cout of grid bounds" << endl;
-        //}
+        m_particles[p]->setPosition(m_particles[p]->getPosition() + delta_t * m_particles[p]->getVelocity());
         m_points.push_back(m_particles[p]->getPosition());
-        nanCheck = (isnan(m_particles[p]->getPosition()[0]) || isnan(m_particles[p]->getPosition()[0]) || isnan(m_particles[p]->getPosition()[0]));
     }
-    if (nanCheck)
-        cerr << "Step 10: PARTICLE POSITION IS NAN" << endl;
 }
 
 bool Grid::outOfBounds(Particle* p) {

@@ -109,7 +109,6 @@ std::vector<Vector3f> MPM::update(float seconds, int currentFrame) {
     writeFrameToFile(currentFrame);
 
     m_grid->reset();
-
     return newPositions;
 }
 
@@ -120,52 +119,104 @@ void MPM::doStep(int step, float delta_t, string description) {
         cout << "\tStep " << step << " begin:" << endl;
     }
 
+    int NUM_THREADS = 4;
+
     assert(step >= 1 && step <= 10);
     switch(step) {
-    case 1:
-        m_grid->computeGridMass();
-        m_grid->computeGridVelocity();
+    case 1: {
+        thread t[NUM_THREADS * 2];
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = m_grid->computeGridMassThread(i, NUM_THREADS);
+            t[NUM_THREADS + i] = m_grid->computeGridVelocityThread(i, NUM_THREADS);
+        }
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i].join();
+            t[NUM_THREADS + i].join();
+        }
         m_grid->debugGridNodes(m_debugParticles, 1);
         break;
-    case 2:
-        m_grid->computeParticleVolumes();
+    }
+    case 2: {
+        thread t[NUM_THREADS];
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = m_grid->computeParticleVolumesThread(i, NUM_THREADS);
+        }
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i].join();
+        }
         m_grid->debugParticles(m_debugParticles, 2);
         break;
+    }
     case 3: {
-        thread t[8];
-        for (unsigned int i = 0; i < 8; i++) {
-            t[i] = m_grid->computeGridForcesThread(i, 8);
+        thread t[NUM_THREADS];
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = m_grid->computeGridForcesThread(i, NUM_THREADS);
         }
-        for (unsigned int i = 0; i < 8; i++) {
+        for (int i = 0; i < NUM_THREADS; i++) {
             t[i].join();
         }
         m_grid->debugGridNodes(m_debugParticles, 3);
         break;
     }
-    case 4:
-        m_grid->updateGridVelocities(delta_t);
+    case 4: {
+        thread t[NUM_THREADS];
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = m_grid->updateGridVelocitiesThread(delta_t, i, NUM_THREADS);
+        }
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i].join();
+        }
         m_grid->debugGridNodes(m_debugParticles, 4);
         break;
-    case 5:
-        m_grid->gridCollision();
+    }
+    case 5: {
+        thread t[NUM_THREADS];
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = m_grid->gridCollisionThread(i, NUM_THREADS);
+        }
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i].join();
+        }
         m_grid->debugGridNodes(m_debugParticles, 5);
         break;
+    }
     case 6:
         m_grid->explicitSolver();
         m_grid->debugGridNodes(m_debugParticles, 6);
         break;
-    case 7:
-        m_grid->calculateDeformationGradient(delta_t);
+    case 7: {
+        thread t[NUM_THREADS];
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = m_grid->calculateDeformationGradientThread(delta_t, i, NUM_THREADS);
+        }
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i].join();
+        }
         m_grid->debugParticles(m_debugParticles, 7);
         break;
-    case 8:
-        m_grid->updateParticleVelocities();
+    }
+    case 8: {
+        thread t[NUM_THREADS];
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = m_grid->updateParticleVelocitiesThread(i, NUM_THREADS);
+        }
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i].join();
+        }
         m_grid->debugParticles(m_debugParticles, 8);
         break;
-    case 9:
-        m_grid->particleCollision();
+    }
+    case 9: {
+        thread t[NUM_THREADS];
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i] = m_grid->particleCollisionThread(i, NUM_THREADS);
+        }
+        for (int i = 0; i < NUM_THREADS; i++) {
+            t[i].join();
+        }
         m_grid->debugParticles(m_debugParticles, 9);
         break;
+    }
     case 10:
         m_grid->updateParticlePositions(delta_t);
         m_grid->debugParticles(m_debugParticles, 10);
@@ -180,7 +231,6 @@ void MPM::doStep(int step, float delta_t, string description) {
 
 void MPM::writeFrameToFile(int frameNum) {
     QString paddedNumber = QString("%4").arg(frameNum, 5, 10, QChar('0'));
-    //ofstream particlesFile((m_outDir + "\\particles." + paddedNumber).toUtf8());
     ofstream particlesFile((m_outDir + "/particles." + paddedNumber).toUtf8());
     for (unsigned int p = 0; p < m_grid->getParticles().size(); p++) {
         Particle part = *m_grid->getParticles()[p];
@@ -191,14 +241,16 @@ void MPM::writeFrameToFile(int frameNum) {
     }
     particlesFile.close();
 
-    //ofstream gridNodesFile((m_outDir + "\\grid." + paddedNumber).toUtf8());
     ofstream gridNodesFile((m_outDir + "/grid." + paddedNumber).toUtf8());
-    for (unsigned int n = 0; n < m_grid->getGridNodes().size(); n++) {
-        GridNode node = *m_grid->getGridNodes()[n];
-        QString index = QString("[%1,%2,%3]").arg(node.getIndex()[0]).arg(node.getIndex()[1]).arg(node.getIndex()[2]);
-        QString mass = QString("%1").arg(node.getMass());
-        QString velocity = QString("[%1,%2,%3]").arg(node.getVelocity()[0]).arg(node.getVelocity()[1]).arg(node.getVelocity()[2]);
-        gridNodesFile << "i:" << index.toStdString() << " density:" << mass.toStdString() << " v:" << velocity.toStdString() << endl;
+    vector<GridNode*> nodes = m_grid->getGridNodes();
+    for (unsigned int n = 0; n < nodes.size(); n++) {
+        GridNode *node = nodes[n];
+        if (node->getMass() != 0) {
+            QString index = QString("[%1,%2,%3]").arg(node->getIndex()[0]).arg(node->getIndex()[1]).arg(node->getIndex()[2]);
+            QString mass = QString("%1").arg(node->getMass());
+            QString velocity = QString("[%1,%2,%3]").arg(node->getVelocity()[0]).arg(node->getVelocity()[1]).arg(node->getVelocity()[2]);
+            gridNodesFile << "i:" << index.toStdString() << " density:" << mass.toStdString() << " v:" << velocity.toStdString() << endl;
+        }
     }
     gridNodesFile.close();
 }
