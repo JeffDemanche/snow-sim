@@ -77,6 +77,9 @@ void Grid::initColliders() {
     m_colliders.push_back(right);
     m_colliders.push_back(left);
     m_colliders.push_back(g);
+
+    CubeCollider* cube = new CubeCollider(Vector3f(0, -0.15, 0), 0.6, M_PI/4.f, 0.1);
+    m_colliders.push_back(cube);
 }
 
 std::vector<CollisionObject *> Grid::getColliders() {
@@ -267,7 +270,9 @@ Matrix3f Grid::velocityGradient(Particle* p) {
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
 //        if (p->getIndex() == 1000 && weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).norm() > 0)
 //            debug("new vel: ", m_nodes[i]->getNewVelocity());
-        velGrad += m_nodes[i]->getNewVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
+        if (m_nodes[i]->getMass() > 0) {
+            velGrad += m_nodes[i]->getNewVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
+        }
     }
     return velGrad;
 }
@@ -422,7 +427,7 @@ void Grid::gridCollision()
 
                     //Vector3f v_rel = m_nodes[i]->getVelocity() - collider->getVelocity();
                     Vector3f v_rel = m_nodes[i]->getNewVelocity() - collider->getVelocity();
-                    Vector3f n = collider->normalAt(m_nodes[i]->getPosition());
+                    Vector3f n = collider->normalAt(m_nodes[i]->getPosition(), m_nodes[i]->getNewVelocity());
                     float u = collider->coefficientOfFriction();
                     float v_n = v_rel.dot(n);
 
@@ -518,7 +523,7 @@ void Grid::particleCollision()
             if (collider->insideObject(m_particles[i]->getPosition())) {
 
                 Vector3f v_rel = m_particles[i]->getVelocity() - collider->getVelocity();
-                Vector3f n = collider->normalAt(m_particles[i]->getPosition());
+                Vector3f n = collider->normalAt(m_particles[i]->getPosition(), m_particles[i]->getVelocity());
                 float u = collider->coefficientOfFriction();
                 float v_n = v_rel.dot(n);
 

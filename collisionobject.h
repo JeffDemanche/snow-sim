@@ -12,7 +12,7 @@ class CollisionObject
 public:
     CollisionObject();
     virtual bool insideObject(Eigen::Vector3f pos){};
-    virtual Eigen::Vector3f normalAt(Eigen::Vector3f pos){};
+    virtual Eigen::Vector3f normalAt(Eigen::Vector3f pos, Eigen::Vector3f vel){};
     virtual Eigen::Vector3f getVelocity(){};
     virtual float coefficientOfFriction(){};
     virtual std::vector<glm::vec3> drawingData(){};

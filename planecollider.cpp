@@ -38,7 +38,7 @@ bool PlaneCollider::insideObject(Vector3f pos) {
     }
 }
 
-Vector3f PlaneCollider::normalAt(Vector3f pos) {
+Vector3f PlaneCollider::normalAt(Vector3f pos, Vector3f vel) {
     return m_normal;
 }
 
