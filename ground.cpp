@@ -12,7 +12,7 @@ bool Ground::insideObject(Vector3f pos) {
     return (pos.y() <= m_groundHeight);
 }
 
-Vector3f Ground::normalAt(Vector3f pos) {
+Vector3f Ground::normalAt(Vector3f pos, Vector3f vel) {
     return Vector3f(0, 1, 0); // Normal is always upward facing
 }
 

@@ -2,20 +2,27 @@
 
 using namespace Eigen;
 
-CubeCollider::CubeCollider(float height, float u) : CollisionObject()
+CubeCollider::CubeCollider(Vector3f center, float u, float z_rot, float scale) : CollisionObject()
 {
+    m_center = center;
+    m_scale = scale;
     m_u = u;
     Matrix4f R;
-    R << cos(M_PI / 4.f), -sin(M_PI / 4.f), 0, 0,
-            sin(M_PI / 4.f), cos(M_PI / 4.f), 0 , 0,
+    R << cos(z_rot), -sin(z_rot), 0, 0,
+            sin(z_rot), cos(z_rot), 0 , 0,
             0, 0, 1, 0,
             0, 0, 0, 1;
     Matrix4f T;
-    T << 1, 0, 0, 0,
-            0, 1, 0, height,
-            0, 0, 1, 0,
+    T << 1, 0, 0, center.x(),
+            0, 1, 0, center.y(),
+            0, 0, 1, center.z(),
             0, 0, 0, 1;
-    m_transform = T * R;
+    Matrix4f S;
+    S << scale, 0, 0, 0,
+            0, scale, 0, 0,
+            0, 0, scale, 0,
+            0, 0, 0, 1;
+    m_transform = T * R * S;
     m_inverseTransform = m_transform.inverse();
 }
 
@@ -24,33 +31,50 @@ bool CubeCollider::insideObject(Vector3f pos) {
     Vector4f obj_pos = m_inverseTransform * Vector4f(pos.x(), pos.y(), pos.z(), 1);
 
     // Check whether position is within bounds of cube
-    if (obj_pos.x() <= 1 && obj_pos.x() >= -1) {
-        if (obj_pos.y() <= 1 && obj_pos.y() >= -1) {
-            if (obj_pos.z() <= 1 && obj_pos.z() >= -1) {
-                return true;
-            }
-        }
+    Vector3f min(-0.5, -0.5, -0.5);
+    Vector3f max(0.5, 0.5, 0.5);
+
+    bool inX = false;
+    if (obj_pos.x() <=  max.x() && obj_pos.x() >= min.x()) {
+        inX = true;
     }
-    return false;
+    bool inY = false;
+    if (obj_pos.y() <= max.y() && obj_pos.y() >= min.y()) {
+        inY = true;
+    }
+    bool inZ = false;
+    if (obj_pos.z() <= max.z() && obj_pos.z() >= min.z()) {
+        inZ = true;
+    }
+
+    bool inCube = false;
+    if (inX && inY && inZ) {
+        inCube = true;
+    }
+
+    return inCube;
 }
 
-Vector3f CubeCollider::normalAt(Vector3f pos) {
+Vector3f CubeCollider::normalAt(Vector3f pos, Vector3f vel) {
     // Transform pos to object space
     Vector4f obj_pos = m_inverseTransform * Vector4f(pos.x(), pos.y(), pos.z(), 1);
 
+    Vector3f min(-0.5, -0.5, -0.5);
+    Vector3f max(0.5, 0.5, 0.5);
+
     // Determine which face pos is closest to and return normal to that face
-    float distToTop = fabs(obj_pos.y() - 1);
-    float distToBottom = fabs(obj_pos.y() + 1);
-    float distToFront = fabs(obj_pos.z() - 1);
-    float distToBack = fabs(obj_pos.z() + 1);
-    float distToRight = fabs(obj_pos.x() - 1);
-    float distToLeft = fabs(obj_pos.x() + 1);
+    float distToTop = fabs(max.y() - obj_pos.y());
+    float distToBottom = fabs(obj_pos.y() - min.y());
+    float distToFront = fabs(max.z() - obj_pos.z());
+    float distToBack = fabs(obj_pos.z() - min.z());
+    float distToRight = fabs(max.x() - obj_pos.x());
+    float distToLeft = fabs(obj_pos.x() - min.x());
     std::vector<float> dists = {distToTop, distToBottom, distToFront, distToBack, distToRight, distToLeft};
 
     int minIndex = 0;
     for (int i = 0; i < dists.size(); i++) {
         if (dists[i] < dists[minIndex]) {
-            minIndex = 0;
+            minIndex = i;
         }
     }
 
@@ -76,8 +100,11 @@ Vector3f CubeCollider::normalAt(Vector3f pos) {
         break;
     }
 
-    Vector4f ws_normal = m_transform * Vector4f(obj_normal.x(), obj_normal.y(), obj_normal.z(), 1);
-    return Vector3f(ws_normal.x(), ws_normal.y(), ws_normal.z());
+    Vector4f ws_normal = m_transform * Vector4f(obj_normal.x(), obj_normal.y(), obj_normal.z(), 0);
+    Vector3f normal = Vector3f(ws_normal.x(), ws_normal.y(), ws_normal.z());
+    normal.normalize();
+
+    return normal;
 }
 
 Vector3f CubeCollider::getVelocity() {

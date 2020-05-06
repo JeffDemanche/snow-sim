@@ -9,7 +9,7 @@ public:
     PlaneCollider(Eigen::Vector3f point, Eigen::Vector3f normal, float u);
 
     bool insideObject(Eigen::Vector3f pos);
-    Eigen::Vector3f normalAt(Eigen::Vector3f pos);
+    Eigen::Vector3f normalAt(Eigen::Vector3f pos, Eigen::Vector3f vel);
     Eigen::Vector3f getVelocity();
     float coefficientOfFriction();
     std::vector<glm::vec3> drawingData();
