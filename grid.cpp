@@ -71,15 +71,15 @@ vector<GridNode*> Grid::getGridNodes() {
 }
 
 void Grid::initColliders() {
-    Ground* g = new Ground(_groundHeight, 0.6);
+    Ground* g = new Ground(_groundHeight, 0.06);
     PlaneCollider* right = new PlaneCollider(m_gridBounds.second - Vector3f((m_gridSpacing), 0, 0), Vector3f(-1, 0, 0), 0.6);
     PlaneCollider* left = new PlaneCollider(m_gridBounds.first + Vector3f((m_gridSpacing), 0, 0), Vector3f(1, 0, 0), 0.6);
     m_colliders.push_back(right);
     m_colliders.push_back(left);
     m_colliders.push_back(g);
 
-    CubeCollider* cube = new CubeCollider(Vector3f(0, -0.15, 0), 0.6, M_PI/4.f, 0.1);
-    m_colliders.push_back(cube);
+//    CubeCollider* cube = new CubeCollider(Vector3f(0, -0.15, 0), 0.6, M_PI/4.f, 0.1);
+//    m_colliders.push_back(cube);
 }
 
 std::vector<CollisionObject *> Grid::getColliders() {
@@ -347,10 +347,13 @@ void Grid::computeGridForces(int thread, int numThreads)
 
             //float V_p = J_p * m_particles[p]->getVolume()
             float V_p = m_particles[p]->getVolume();
-            Matrix3f stress = computeStress(F_e, F_p);
+            Matrix3f stress = computeStress(F_p, F_e);
 
             Vector3f force = V_p * stress * del_w;
             sum += force;
+        }
+        if (thread == 0 && sum.norm() > 0) {
+            cout << sum << endl << endl;
         }
         Vector3f force = -1 * sum;
 
@@ -425,8 +428,6 @@ void Grid::gridCollision(int thread, int numThreads)
 
                 // Check whether gridNode is intersecting with collider
                 if (collider->insideObject((m_nodes[i]->getPosition()))) {
-
-                    //Vector3f v_rel = m_nodes[i]->getVelocity() - collider->getVelocity();
                     Vector3f v_rel = m_nodes[i]->getNewVelocity() - collider->getVelocity();
                     Vector3f n = collider->normalAt(m_nodes[i]->getPosition(), m_nodes[i]->getNewVelocity());
                     float u = collider->coefficientOfFriction();
@@ -434,7 +435,7 @@ void Grid::gridCollision(int thread, int numThreads)
 
                     Vector3f v_rel_prime = v_rel;
                     if (v_n < 0) { // Collision only applied if objects are not separating
-                        Vector3f v_t = v_rel - n * v_n;
+                        Vector3f v_t = (v_rel - n * v_n);
                         if (v_t.norm() <= (-u * v_n)) { // If sticking impulse is required
                             v_rel_prime = Vector3f(0, 0, 0);
                         } else { // Otherwise apply dynamic friction
@@ -543,7 +544,7 @@ void Grid::particleCollision(int thread, int numThreads)
 
                 Vector3f v_rel_prime = v_rel;
                 if (v_n < 0) { // Collision only applied if objects are not separating
-                    Vector3f v_t = v_rel - n * v_n;
+                    Vector3f v_t = (v_rel - n * v_n);
                     if (v_t.norm() <= (-u * v_n)) { // If sticking impulse is required
                         v_rel_prime = Vector3f(0,0,0);
                     } else { // Otherwise apply dynamic friction

@@ -1,18 +1,18 @@
 {
-  "object": "D:/CSCI2240/snow-sim/meshes/tiny-sphere.obj",
+  "object": "D:/CSCI2240/snow-sim/scenes/cube1.obj",
   "output": "D:/CSCI2240/snow-sim/out",
-  "particles": 3000,
+  "particles": 2000,
   "frames": 60,
   "debugStepTimes": true,
   "debugParticles": 1,
 
   "grid": {
-    "gridMin": [-1, -0.3, -1],
-    "gridMax": [1, 0.4, 1],
-    "gridSpacing": 0.040,
-    "initialVelocity": [0, 0, 0],
-    "gravity": [0, -5, 0],
-    "groundHeight": -0.2
+    "gridMin": [-4, -6.82379, -4],
+    "gridMax": [4, 1.55341, 4],
+    "gridSpacing": 0.15,
+    "initialVelocity": [0, 0, 1],
+    "gravity": [0, -1, 0],
+    "groundHeight": -3.25
   },
 
   "hyperparameters": {
@@ -21,6 +21,6 @@
     "youngsModulus": 1.4E5,
     "hardeningCoefficient": 10,
     "poissonsRatio": 0.2,
-    "density": 400
+    "density": 1000
   }
 }
