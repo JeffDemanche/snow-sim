@@ -25,6 +25,15 @@ struct HyperparameterInfo {
     float density;
 };
 
+struct CollisionInfo {
+    string type;
+    Vector3f center;
+    Vector3f velocity;
+    float u;
+    float rot_z;
+    Vector3f scale;
+};
+
 class SceneFile
 {
 public:
@@ -56,6 +65,13 @@ public:
         };
     };
 
+    CollisionInfo getCollisionInfo();
+    static CollisionInfo defaultCollisionInfo() {
+        return CollisionInfo {
+            "none", Vector3f(0,0,0), Vector3f(0,0,0), 0.6, 0, Vector3f(1, 1, 1)
+        };
+    };
+
 private:
     string m_object;
     string m_output;
@@ -67,6 +83,7 @@ private:
 
     GridInfo m_gridInfo;
     HyperparameterInfo m_hyperparameterInfo;
+    CollisionInfo m_collisionInfo;
 
 };
 

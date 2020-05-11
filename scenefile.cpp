@@ -66,6 +66,27 @@ SceneFile::SceneFile(string sceneFile)
     } else {
         m_hyperparameterInfo = defaultHyperparameterInfo();
     }
+
+    if (jsonDoc.HasMember("collisions")) {
+        Value colObj = jsonDoc["collisions"].GetObject();
+
+        Vector3f center(colObj["center"].GetArray()[0].GetFloat(),
+                        colObj["center"].GetArray()[1].GetFloat(),
+                        colObj["center"].GetArray()[2].GetFloat());
+        Vector3f velocity(colObj["velocity"].GetArray()[0].GetFloat(),
+                          colObj["velocity"].GetArray()[1].GetFloat(),
+                          colObj["velocity"].GetArray()[2].GetFloat());
+        Vector3f scale(colObj["scale"].GetArray()[0].GetFloat(),
+                       colObj["scale"].GetArray()[1].GetFloat(),
+                       colObj["scale"].GetArray()[2].GetFloat());
+
+        m_collisionInfo = CollisionInfo {
+            colObj["type"].GetString(), center, velocity, colObj["coefficientOfFriction"].GetFloat(), colObj["rotZ"].GetFloat(), scale
+        };
+
+    } else {
+        m_collisionInfo = defaultCollisionInfo();
+    }
 }
 
 string SceneFile::getObject() {
@@ -114,4 +135,8 @@ GridInfo SceneFile::getGridInfo() {
 
 HyperparameterInfo SceneFile::getHyperparameterInfo() {
     return m_hyperparameterInfo;
+}
+
+CollisionInfo SceneFile::getCollisionInfo() {
+    return m_collisionInfo;
 }

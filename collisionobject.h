@@ -16,6 +16,7 @@ public:
     virtual Eigen::Vector3f getVelocity(){};
     virtual float coefficientOfFriction(){};
     virtual std::vector<glm::vec3> drawingData(){};
+    virtual void updatePosition(float delta_t){};
 };
 
 #endif // COLLISIONOBJECT_H

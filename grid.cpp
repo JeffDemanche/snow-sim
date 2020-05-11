@@ -5,9 +5,10 @@
 #include <math.h>
 #include "cubecollider.h"
 #include "planecollider.h"
+#include "spherecollider.h"
 #include <Eigen/SVD>
 
-Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, HyperparameterInfo hyperparamaterInfo)
+Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, HyperparameterInfo hyperparamaterInfo, CollisionInfo collisionInfo)
 {
     _initParticleVelocity = gridInfo.initialVelocity;
     _gravity = gridInfo.gravity;
@@ -40,7 +41,7 @@ Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, Hyperparameter
         m_gridDepth = fabs(cushionMax.z() - cushionMin.z()) / m_gridSpacing;
         initGrid(cushionMin, cushionMax);
     }
-    initColliders();
+    initColliders(collisionInfo);
 
     std::cout << "Number of particles: " << m_particles.size() << std::endl;
     std::cout << "Number of grid nodes: " << m_nodes.size() << std::endl;
@@ -70,7 +71,7 @@ vector<GridNode*> Grid::getGridNodes() {
     return m_nodes;
 }
 
-void Grid::initColliders() {
+void Grid::initColliders(CollisionInfo collisionInfo) {
     Ground* g = new Ground(_groundHeight, 0.6);
     PlaneCollider* right = new PlaneCollider(m_gridBounds.second - Vector3f((m_gridSpacing), 0, 0), Vector3f(-1, 0, 0), 0.6);
     PlaneCollider* left = new PlaneCollider(m_gridBounds.first + Vector3f((m_gridSpacing), 0, 0), Vector3f(1, 0, 0), 0.6);
@@ -78,8 +79,17 @@ void Grid::initColliders() {
     m_colliders.push_back(left);
     m_colliders.push_back(g);
 
-    CubeCollider* cube = new CubeCollider(Vector3f(0, -0.15, 0), 0.6, M_PI/4.f, 0.1);
-    m_colliders.push_back(cube);
+    string type = collisionInfo.type;
+    if (type == "cube") {
+        CubeCollider* cube = new CubeCollider(collisionInfo.center, collisionInfo.u, collisionInfo.rot_z * (M_PI / 180.f), collisionInfo.scale, collisionInfo.velocity);
+        m_colliders.push_back(cube);
+        cout << "Added cube collider" << endl;
+    }
+    if (type == "sphere") {
+        SphereCollider* sphere = new SphereCollider(collisionInfo.center, collisionInfo.u, collisionInfo.rot_z * (M_PI / 180.f), collisionInfo.scale.x(), collisionInfo.velocity);
+        m_colliders.push_back(sphere);
+        cout << "Added sphere collider" << endl;
+    }
 }
 
 std::vector<CollisionObject *> Grid::getColliders() {
@@ -156,6 +166,38 @@ int Grid::getNodeIndexAt(int x, int y, int z) {
     int c = ((int) m_gridWidth) * ((int) m_gridHeight);
     return a * x + b * y + c * z;
 }
+
+vector<int> Grid::getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos) {
+   // return list of m_nodes indices of grid nodes within 2*gridSpacing neighborhood of particlePos
+   std::set<int> neighbors;
+
+       int i_start = max(0, gridNodeOrigin(0) - 1);
+       float i_end = fmin(m_gridWidth, gridNodeOrigin(0) + 2);
+       int j_start = max(0, gridNodeOrigin(1) - 1);
+       float j_end = fmin(m_gridHeight, gridNodeOrigin(1) + 2);
+       int k_start = max(0, gridNodeOrigin(2) - 1);
+       float k_end = fmin(m_gridDepth, gridNodeOrigin(2) + 2);
+
+       // Loop through local neighboorhood and search for gridNodes that are within range of the particle
+       for (int i = i_start; i < i_end; i++) {
+           for (int j = j_start; j < j_end; j++) {
+               for (int k = k_start; k < k_end; k++) {
+                   int listIndex = i + j * m_gridWidth + (k * m_gridWidth * m_gridHeight);
+                   Vector3f neighborPos = m_nodes[listIndex]->getPosition();
+                   if (fabs(neighborPos.x() - particlePos.x()) <= 2*m_gridSpacing || fabs(neighborPos.y() - particlePos.y()) <= 2*m_gridSpacing || fabs(neighborPos.z() - particlePos.z()) <= 2*m_gridSpacing) {
+                       neighbors.insert(listIndex);
+                   }
+               }
+           }
+       }
+   // Convert set to list and return
+   std::vector<int> result;
+   for(auto it = neighbors.begin(); it != neighbors.end(); ++it) {
+       result.push_back(*it);
+   }
+   return result;
+}
+
 
 void Grid::reset() {
     vector<GridNode*> newNodes;
@@ -387,13 +429,15 @@ Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
 float Grid::lambda(Matrix3f Fp, float Jp) {
     float lambda_o = _Eo * _v / ((1.f + _v) * (1.f - 2.f*_v));
     float result = (lambda_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, lambda_o);
+    //return fmin(result, lambda_o);
+    return result;
 }
 
 float Grid::mu(Matrix3f Fp, float Jp) {
     float mu_o = _Eo / (2.f * (1.f + _v));
     float result = (mu_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, mu_o);
+    //return fmin(result, mu_o);
+    return result;
 }
 
 void Grid::updateGridVelocities(float delta_t, int thread, int numThreads)
@@ -412,6 +456,14 @@ void Grid::updateGridVelocities(float delta_t, int thread, int numThreads)
 
 thread Grid::updateGridVelocitiesThread(float delta_t, int t, int numThreads) {
     return thread(&Grid::updateGridVelocities, this, delta_t, t, numThreads);
+}
+
+void Grid::updateColliderPositions(float delta_t) {
+    // Update the position of all colliders
+    for (unsigned int c = 0; c < m_colliders.size(); c++) {
+        CollisionObject* collider = m_colliders[c];
+        collider->updatePosition(delta_t);
+    }
 }
 
 void Grid::gridCollision(int thread, int numThreads)

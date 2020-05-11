@@ -1,0 +1,36 @@
+{
+  "object": "/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/meshes/snowball.obj",
+  "output": "/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/out",
+  "particles": 250,
+  "frames": 36,
+  "debugStepTimes": true,
+  "debugParticles": 1,
+
+
+  "grid": {
+    "gridMin": [-0.12, -0.21, -0.12],
+    "gridMax": [0.12, 0.10, 0.12],
+    "gridSpacing": 0.010,
+    "initialVelocity": [0, 0, 0],
+    "gravity": [0, -1, 0],
+    "groundHeight": -0.2
+  },
+
+  "hyperparameters": {
+    "criticalCompression": 2.5E-2,
+    "criticalStretch": 7.5E-3,
+    "youngsModulus": 1.4E5,
+    "hardeningCoefficient": 10,
+    "poissonsRatio": 0.2,
+    "density": 400
+  },
+
+  "collisions": {
+    "type": "cube",
+    "center": [0, -0.15, 0],
+    "velocity": [0, 0, 0],
+    "coefficientOfFriction": 0.6,
+    "rotZ": 45,
+    "scale": [0.1, 0.1, 0.2]
+  }
+}

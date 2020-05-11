@@ -2,7 +2,7 @@
 
 using namespace Eigen;
 
-CubeCollider::CubeCollider(Vector3f center, float u, float z_rot, float scale) : CollisionObject()
+CubeCollider::CubeCollider(Vector3f center, float u, float z_rot, Vector3f scale, Vector3f velocity) : CollisionObject()
 {
     m_center = center;
     m_scale = scale;
@@ -18,12 +18,26 @@ CubeCollider::CubeCollider(Vector3f center, float u, float z_rot, float scale) :
             0, 0, 1, center.z(),
             0, 0, 0, 1;
     Matrix4f S;
-    S << scale, 0, 0, 0,
-            0, scale, 0, 0,
-            0, 0, scale, 0,
+    S << scale.x(), 0, 0, 0,
+            0, scale.y(), 0, 0,
+            0, 0, scale.z(), 0,
             0, 0, 0, 1;
+    m_R = R;
+    m_T = T;
+    m_S = S;
     m_transform = T * R * S;
     m_inverseTransform = m_transform.inverse();
+    m_velocity = velocity;
+}
+
+void CubeCollider::updatePosition(float delta_t) {
+        m_center = m_center + m_velocity * delta_t;
+        m_T <<  1, 0, 0, m_center.x(),
+                0, 1, 0, m_center.y(),
+                0, 0, 1, m_center.z(),
+                0, 0, 0, 1;
+        m_transform = m_T * m_R * m_S;
+        m_inverseTransform = m_transform.inverse();
 }
 
 bool CubeCollider::insideObject(Vector3f pos) {
@@ -108,7 +122,7 @@ Vector3f CubeCollider::normalAt(Vector3f pos, Vector3f vel) {
 }
 
 Vector3f CubeCollider::getVelocity() {
-    return Vector3f(0, 0, 0);  // Cube is stationary
+    return m_velocity;
 }
 
 float CubeCollider::coefficientOfFriction() {

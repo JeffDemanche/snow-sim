@@ -60,7 +60,8 @@ SOURCES += main.cpp \
     collisionobject.cpp \
     ground.cpp \
     cubecollider.cpp \
-    planecollider.cpp
+    planecollider.cpp \
+    spherecollider.cpp
 
 HEADERS += \
     grid.h \
@@ -386,7 +387,8 @@ HEADERS += \
     collisionobject.h \
     ground.h \
     cubecollider.h \
-    planecollider.h
+    planecollider.h \
+    spherecollider.h
 
 FORMS += \
     mainwindow.ui

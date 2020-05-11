@@ -24,6 +24,10 @@ float Ground::coefficientOfFriction() {
     return m_u;
 }
 
+void Ground::updatePosition(float delta_t) {
+    //nothing needs to be done for ground plane
+}
+
 std::vector<glm::vec3> Ground::drawingData() {
     int numVertices = 6;
     std::vector<glm::vec3> data(2*numVertices);
