@@ -2,17 +2,17 @@
   "object": "D:/CSCI2240/snow-sim/meshes/snowball.obj",
   "output": "D:/CSCI2240/snow-sim/out",
   "particles": 500,
-  "frames": 1200,
-  "stepLength": 10E-5,
+  "frames": 2000,
+  "stepLength": 0.005,
   "debugStepTimes": true,
   "debugParticles": 2,
 
   "grid": {
-    "gridMin": [-0.65, -0.45, -0.65],
-    "gridMax": [0.65, 0.25, 0.65],
+    "gridMin": [-1, -0.5, -1],
+    "gridMax": [1, 0.20, 1],
     "gridSpacing": 0.005,
     "initialVelocity": [0, 0, 0],
-    "gravity": [0, -10, 0],
+    "gravity": [0, -4, 0],
     "groundHeight": -0.2
   },
 
@@ -20,10 +20,10 @@
     "criticalCompression": 2.5E-2,
     "criticalStretch": 7.5E-3,
     "youngsModulus": 1.4E5,
-    "hardeningCoefficient": 1,
+    "hardeningCoefficient": 10,
     "poissonsRatio": 0.2,
-    "density": 200,
-    "particleSize": 0.015
+    "density": 400,
+    "particleSize": 0.012
   },
 
   "collisions": {

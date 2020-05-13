@@ -285,9 +285,9 @@ float Grid::weightGradientFunctionDelN(float x) {
     // x here is the distance between a particle and a grid node.
     float xAbs = fabs(x);
     if (xAbs >= 0 && xAbs < 1) {
-        return  (x * x * 3.0 / 2.0) - (2 * xAbs) * (x < 0 ? -1 : 1);
+        return  (x * x * 3.0 / 2.0) - (2 * xAbs);// * (x < 0 ? -1 : 1);
     } else if (xAbs < 2 && xAbs >= 1) {
-        return ((-0.5 * x * x) + (2.f * xAbs) - 2) * (x < 0 ? -1 : 1);
+        return ((-0.5 * x * x) + (2.f * xAbs) - 2);// * (x < 0 ? -1 : 1);
     } else {
         return 0;
     }
@@ -386,8 +386,6 @@ thread Grid::computeParticleVolumesThread(int t, int numThreads) {
 
 void Grid::computeGridForces(int thread, int numThreads)
 {
-    // Step 3. See eq. 3.9. Do we need to compute the deformation gradient prior to this happening?
-    // For grid nodes within range
     for (unsigned int n = thread; n < m_nodes.size(); n += numThreads) {
         GridNode* curr = m_nodes[n];
         curr->setForce(_gravity * curr->getMass());
@@ -399,7 +397,7 @@ void Grid::computeGridForces(int thread, int numThreads)
                 continue;
 
             Matrix3f F_p = m_particles[p]->getPlasticDeformation();
-
+            //m_particles[p]->setPlasticDeformation(m_particles[p]->getPlasticDeformation() * 0.001 + Matrix3f::Identity());
             Matrix3f F_e = m_particles[p]->getElasticDeformation();
 
             //float V_p = m_particles[p]->getVolume()
@@ -409,8 +407,7 @@ void Grid::computeGridForces(int thread, int numThreads)
             float Je = F_e.determinant();
             float lambda_Fp = lambda(F_p, Jp);
             float mu_Fp = mu(F_p, Jp);
-            if (thread == 0 && p == 1000)
-                cout << Jp << endl;
+
             Matrix3f I = Matrix3f::Identity();
 
             assert(!isinf(lambda_Fp));
@@ -425,15 +422,12 @@ void Grid::computeGridForces(int thread, int numThreads)
             Matrix3f Re = U * V.transpose();
 
             Matrix3f stress = ((2.f * mu_Fp) * (F_e - Re) * F_e.transpose()) + ((lambda_Fp) * (Je - 1.f) * Je * I);
-//            stress = Matrix3f::Identity();
-//            if (thread == 0 && p == 1000)
-//                cout << stress << endl << endl;
-            Vector3f force = V_p * stress * del_w;
+            stress *= 1;
+            //stress = Matrix3f::Identity();
+            Vector3f force = -V_p * stress * del_w;
             sum += force;
         }
-
-        Vector3f force = -1 * sum;
-        curr->setForce(curr->getForce() + force);
+        curr->setForce(curr->getForce() + sum);
     }
 }
 
@@ -466,13 +460,13 @@ Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
 float Grid::lambda(Matrix3f Fp, float Jp) {
     float lambda_o = _Eo * _v / ((1.f + _v) * (1.f - 2.f*_v));
     float result = (lambda_o * exp(_hardening * (1.f - Jp)));
-    return result;
+    return fmin(result, 1000000.f);
 }
 
 float Grid::mu(Matrix3f Fp, float Jp) {
     float mu_o = _Eo / (2.f * (1.f + _v));
     float result = (mu_o * exp(_hardening * (1.f - Jp)));
-    return result;
+    return fmin(result, 1000000.f);
 }
 
 void Grid::updateGridVelocities(float delta_t, int thread, int numThreads)

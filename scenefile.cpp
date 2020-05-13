@@ -15,6 +15,7 @@ SceneFile::SceneFile(string sceneFile)
     string json((istreambuf_iterator<char>(in)), istreambuf_iterator<char>());
 
     Document jsonDoc;
+    cout << json.c_str() << endl;
     jsonDoc.Parse(json.c_str());
 
     assert(jsonDoc.IsObject());

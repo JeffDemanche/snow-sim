@@ -3,16 +3,23 @@ import bmesh
 
 ### PARAMETERS TO SET
 
-num_frames = 36
+num_steps = 2000
+step_length = 10E-5
+target_framerate = 1.0/24.0
 filepath_base = 'D:/CSCI2240/snow-sim/out/particles'
-particle_density=0.2
-particle_diameter = 0.001
-render_as_volume = False
-render_as_particles = True
-snow_shadows_off = False
+
+setup_materials = True
+particle_density=20
 
 ###
 
+steps_per_second = 1.0 / step_length
+steps_per_frame = steps_per_second * target_framerate
+num_frames = int(num_steps * step_length)
+
+print("Steps per Second: " + str(steps_per_second))
+print("Steps per Frame: " + str(steps_per_frame))
+print("Num Frames: " + str(num_frames))
 
 mesh = bpy.data.meshes.new("mesh")
 obj = bpy.data.objects.new("SnowPointCloud", mesh)
@@ -52,8 +59,9 @@ def update_bounds(x, y, z):
     if z < z_min:
         z_min = z
 
-for frame in range(0, num_frames):
-    filepath = filepath_base + "." + str(frame).zfill(5)
+while frame < num_frames:
+    step = frame * steps_per_frame
+    filepath = filepath_base + "." + str(step).zfill(5)
 
     vertsPos = []
     
@@ -92,41 +100,10 @@ for frame in range(0, num_frames):
                 this_key.keyframe_insert("value", frame=frame + 1)
                 
                 vert_index += 1
-         
-if render_as_particles:
+                
+if setup_materials:
     bpy.context.scene.render.engine = 'CYCLES'
     
-    mesh = bpy.data.meshes.new('Basic_Sphere')
-    part_obj = bpy.data.objects.new("BaseParticle", mesh)
-    
-    # Add the object into the scene.
-    bpy.context.collection.objects.link(part_obj)
-
-    # Construct the bmesh sphere and assign it to the blender mesh.
-    bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=particle_diameter)
-    bm.to_mesh(mesh)
-    #bm.free()
-    
-    # Parent sphere to snow cloud
-    part_obj.parent = obj
-    # Instance base particles at every point in cloud
-    obj.instance_type = "VERTS"
-    
-    
-    part_mat = bpy.data.materials.new("Snow Particles")
-    part_mat.use_nodes = True
-    part_obj.data.materials.append(part_mat)
-    links = part_mat.node_tree.links
-    default_shade = part_mat.node_tree.nodes['Principled BSDF']
-    default_shade.inputs[5].default_value = 0.2
-    default_shade.inputs[17].default_value = [0.35, 0.35, 0.35, 1.0]
-    
-    if snow_shadows_off: 
-        part_obj.cycles_visibility.shadow = False
-    
-         
-if render_as_volume:    
     mesh = bpy.data.meshes.new('Basic_Cube')
     mat_obj = bpy.data.objects.new("SnowBound", mesh)
     mat_obj.display_type = "WIRE"

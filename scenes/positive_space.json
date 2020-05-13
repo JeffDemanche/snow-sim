@@ -1,0 +1,37 @@
+{
+  "object": "D:/CSCI2240/snow-sim/meshes/sphere-positive-space.obj",
+  "output": "D:/CSCI2240/snow-sim/out",
+  "particles": 500,
+  "frames": 2000,
+  "stepLength": 0.01,
+  "debugStepTimes": true,
+  "debugParticles": 2,
+
+  "grid": {
+    "gridMin": [0.0, 0.0, 0.0],
+    "gridMax": [1.0, 1.0, 1.0],
+    "gridSpacing": 0.005,
+    "initialVelocity": [0.0, 0.0, 0.0],
+    "gravity": [0.0, -1, 0.0],
+    "groundHeight": 0.2
+  },
+
+  "hyperparameters": {
+    "criticalCompression": 2.5E-2,
+    "criticalStretch": 7.5E-3,
+    "youngsModulus": 1.4E5,
+    "hardeningCoefficient": 1,
+    "poissonsRatio": 0.2,
+    "density": 400,
+    "particleSize": 0.012
+  },
+
+  "collisions": {
+    "type": "cube",
+    "center": [0.5, 0.25, 0.5],
+    "velocity": [0, 0, 0],
+    "coefficientOfFriction": 0.6,
+    "rotZ": 45,	
+    "scale": [0.1, 0.1, 0.2]
+  }
+}
