@@ -3,10 +3,13 @@ import bmesh
 
 ### PARAMETERS TO SET
 
-num_frames = 50
+num_frames = 36
 filepath_base = 'D:/CSCI2240/snow-sim/out/particles'
-setup_materials = True
-particle_density=20
+particle_density=0.2
+particle_diameter = 0.001
+render_as_volume = False
+render_as_particles = True
+snow_shadows_off = False
 
 ###
 
@@ -89,10 +92,41 @@ for frame in range(0, num_frames):
                 this_key.keyframe_insert("value", frame=frame + 1)
                 
                 vert_index += 1
-                
-if setup_materials:
+         
+if render_as_particles:
     bpy.context.scene.render.engine = 'CYCLES'
     
+    mesh = bpy.data.meshes.new('Basic_Sphere')
+    part_obj = bpy.data.objects.new("BaseParticle", mesh)
+    
+    # Add the object into the scene.
+    bpy.context.collection.objects.link(part_obj)
+
+    # Construct the bmesh sphere and assign it to the blender mesh.
+    bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=particle_diameter)
+    bm.to_mesh(mesh)
+    #bm.free()
+    
+    # Parent sphere to snow cloud
+    part_obj.parent = obj
+    # Instance base particles at every point in cloud
+    obj.instance_type = "VERTS"
+    
+    
+    part_mat = bpy.data.materials.new("Snow Particles")
+    part_mat.use_nodes = True
+    part_obj.data.materials.append(part_mat)
+    links = part_mat.node_tree.links
+    default_shade = part_mat.node_tree.nodes['Principled BSDF']
+    default_shade.inputs[5].default_value = 0.2
+    default_shade.inputs[17].default_value = [0.35, 0.35, 0.35, 1.0]
+    
+    if snow_shadows_off: 
+        part_obj.cycles_visibility.shadow = False
+    
+         
+if render_as_volume:    
     mesh = bpy.data.meshes.new('Basic_Cube')
     mat_obj = bpy.data.objects.new("SnowBound", mesh)
     mat_obj.display_type = "WIRE"
