@@ -5,9 +5,10 @@
 #include <math.h>
 #include "cubecollider.h"
 #include "planecollider.h"
+#include "spherecollider.h"
 #include <Eigen/SVD>
 
-Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, HyperparameterInfo hyperparamaterInfo)
+Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, HyperparameterInfo hyperparamaterInfo, CollisionInfo collisionInfo)
 {
     _initParticleVelocity = gridInfo.initialVelocity;
     _gravity = gridInfo.gravity;
@@ -20,27 +21,27 @@ Grid::Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, Hyperparameter
     _hardening = hyperparamaterInfo.hardeningCoefficient;
     _targetDensity = hyperparamaterInfo.density;
 
-    m_gridSpacing = gridInfo.gridSpacing;
+    m_gridSpacing = hyperparamaterInfo.particleSize * 2;
     snowMesh.buildBoundingBox();
-    vector<Vector3f> points = pointsFromMesh(snowMesh, numParticles);
-    m_particleMass = _targetDensity / points.size();
-    initParticles(points);
+    vector<Particle*> particles = particlesFromMesh(snowMesh, hyperparamaterInfo.density, hyperparamaterInfo.particleSize, gridInfo.initialVelocity);
+    initParticles(particles);
 
     if (gridInfo.gridMax == Vector3f::Zero() && gridInfo.gridMin == Vector3f::Zero()) {
         pair<Vector3f, Vector3f> boundingPoints = snowMesh.boundingBoxCorners();
         pair<Vector3f, Vector3f> gridBounds = findGridBoundaries(boundingPoints.first, boundingPoints.second, _groundHeight);
         initGrid(gridBounds.first, gridBounds.second);
     } else {
-        Vector3f cushion = Vector3f(m_gridSpacing, m_gridSpacing, m_gridSpacing);
-        Vector3f cushionMin = gridInfo.gridMin + cushion;
-        Vector3f cushionMax = gridInfo.gridMax + cushion;
+        pair<Vector3f, Vector3f> boundingPoints = snowMesh.boundingBoxCorners();
+        cout << "Mesh BB Min: " << boundingPoints.first.transpose() << endl;
+        cout << "Mesh BB Max: " << boundingPoints.second.transpose() << endl;
+
         m_gridBounds = pair<Vector3f, Vector3f>(gridInfo.gridMin, gridInfo.gridMax);
-        m_gridWidth = fabs(cushionMax.x() - cushionMin.x()) / m_gridSpacing;
-        m_gridHeight = fabs(cushionMax.y() - cushionMin.y()) / m_gridSpacing;
-        m_gridDepth = fabs(cushionMax.z() - cushionMin.z()) / m_gridSpacing;
-        initGrid(cushionMin, cushionMax);
+        m_gridWidth = fabs(gridInfo.gridMax.x() - gridInfo.gridMin.x()) / m_gridSpacing;
+        m_gridHeight = fabs(gridInfo.gridMax.y() - gridInfo.gridMin.y()) / m_gridSpacing;
+        m_gridDepth = fabs(gridInfo.gridMax.z() - gridInfo.gridMin.z()) / m_gridSpacing;
+        initGrid(gridInfo.gridMin, gridInfo.gridMax);
     }
-    initColliders();
+    initColliders(collisionInfo);
 
     std::cout << "Number of particles: " << m_particles.size() << std::endl;
     std::cout << "Number of grid nodes: " << m_nodes.size() << std::endl;
@@ -70,8 +71,9 @@ vector<GridNode*> Grid::getGridNodes() {
     return m_nodes;
 }
 
-void Grid::initColliders() {
-    Ground* g = new Ground(_groundHeight, 0.06);
+void Grid::initColliders(CollisionInfo collisionInfo) {
+    Ground* g = new Ground(_groundHeight, 0.6);
+
     PlaneCollider* right = new PlaneCollider(m_gridBounds.second - Vector3f((m_gridSpacing), 0, 0), Vector3f(-1, 0, 0), 0.6);
     PlaneCollider* left = new PlaneCollider(m_gridBounds.first + Vector3f((m_gridSpacing), 0, 0), Vector3f(1, 0, 0), 0.6);
     m_colliders.push_back(right);
@@ -80,19 +82,28 @@ void Grid::initColliders() {
 
 //    CubeCollider* cube = new CubeCollider(Vector3f(0, -0.15, 0), 0.6, M_PI/4.f, 0.1);
 //    m_colliders.push_back(cube);
+    string type = collisionInfo.type;
+    if (type == "cube") {
+        CubeCollider* cube = new CubeCollider(collisionInfo.center, collisionInfo.u, collisionInfo.rot_z * (M_PI / 180.f), collisionInfo.scale, collisionInfo.velocity);
+        m_colliders.push_back(cube);
+        cout << "Added cube collider" << endl;
+    }
+    if (type == "sphere") {
+        SphereCollider* sphere = new SphereCollider(collisionInfo.center, collisionInfo.u, collisionInfo.rot_z * (M_PI / 180.f), collisionInfo.scale.x(), collisionInfo.velocity);
+        m_colliders.push_back(sphere);
+        cout << "Added sphere collider" << endl;
+    }
 }
 
 std::vector<CollisionObject *> Grid::getColliders() {
     return m_colliders;
 }
 
-void Grid::initParticles(vector<Vector3f> points)
+void Grid::initParticles(vector<Particle*> points)
 {
-    for(int i = 0; i < points.size(); i++) {
-        Vector3f p = points[i];
-        Particle* particle = new Particle(p, i, m_particleMass, _initParticleVelocity);
-        m_particles.push_back(particle);
-        m_points.push_back(p);
+    for(unsigned int i = 0; i < points.size(); i++) {
+        m_particles.push_back(points[i]);
+        m_points.push_back(points[i]->getPosition());
     }
 }
 
@@ -157,6 +168,38 @@ int Grid::getNodeIndexAt(int x, int y, int z) {
     return a * x + b * y + c * z;
 }
 
+vector<int> Grid::getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos) {
+   // return list of m_nodes indices of grid nodes within 2*gridSpacing neighborhood of particlePos
+   std::set<int> neighbors;
+
+       int i_start = max(0, gridNodeOrigin(0) - 1);
+       float i_end = fmin(m_gridWidth, gridNodeOrigin(0) + 2);
+       int j_start = max(0, gridNodeOrigin(1) - 1);
+       float j_end = fmin(m_gridHeight, gridNodeOrigin(1) + 2);
+       int k_start = max(0, gridNodeOrigin(2) - 1);
+       float k_end = fmin(m_gridDepth, gridNodeOrigin(2) + 2);
+
+       // Loop through local neighboorhood and search for gridNodes that are within range of the particle
+       for (int i = i_start; i < i_end; i++) {
+           for (int j = j_start; j < j_end; j++) {
+               for (int k = k_start; k < k_end; k++) {
+                   int listIndex = i + j * m_gridWidth + (k * m_gridWidth * m_gridHeight);
+                   Vector3f neighborPos = m_nodes[listIndex]->getPosition();
+                   if (fabs(neighborPos.x() - particlePos.x()) <= 2*m_gridSpacing || fabs(neighborPos.y() - particlePos.y()) <= 2*m_gridSpacing || fabs(neighborPos.z() - particlePos.z()) <= 2*m_gridSpacing) {
+                       neighbors.insert(listIndex);
+                   }
+               }
+           }
+       }
+   // Convert set to list and return
+   std::vector<int> result;
+   for(auto it = neighbors.begin(); it != neighbors.end(); ++it) {
+       result.push_back(*it);
+   }
+   return result;
+}
+
+
 void Grid::reset() {
     vector<GridNode*> newNodes;
     // Create new GridNodes with only position
@@ -170,13 +213,19 @@ void Grid::reset() {
     m_nodes = newNodes;
 }
 
-vector<Vector3f> Grid::pointsFromMesh(Mesh mesh, size_t numParticles)
+vector<Particle*> Grid::particlesFromMesh(Mesh mesh, float density, float particleSize, Vector3f initialVelocity)
 {
     auto t0 = chrono::high_resolution_clock::now();
 
-    vector<Vector3f> points = vector<Vector3f>();
-    for (size_t i = 0; i < numParticles; i++) {
-        points.push_back(mesh.randPosition());
+    float volume = mesh.volume();
+    float particleMass = density * pow(particleSize, 3);
+    int totalParticles = static_cast<unsigned int>(volume / pow(particleSize, 3));
+    int numParticles = 0;
+
+    vector<Particle*> points = vector<Particle*>();
+    while (numParticles < totalParticles) {
+        points.push_back(new Particle(mesh.randPosition(), numParticles, particleMass, initialVelocity));
+        numParticles++;
     }
 
     auto t1 = chrono::high_resolution_clock::now();
@@ -219,10 +268,13 @@ thread Grid::computeGridMassThread(int t, int numThreads) {
 
 float Grid::weightFunctionN(float x) {
     // Eq. 3.3
-    if (fabs(x) >= 0 && fabs(x) < 1) {
-       return  (0.5 * fabs(x*x*x) - (x*x) + 2.f/3.f);
-    } else if (fabs(x) < 2 && fabs(x) >= 1) {
-        return (-1 * 1.f/6.f * fabs(x*x*x) + (x*x) - 2.f*fabs(x) + 4.f/3.f);
+    float xAbs = fabs(x);
+    if (xAbs >= 0 && xAbs < 1) {
+        float x3 = x * x * xAbs;
+        return  (0.5 * x3 - (x * x) + (2.f/3.f));
+    } else if (xAbs < 2 && xAbs >= 1) {
+        float x3 = x * x * xAbs;
+        return (-1.f/6.f * x3 + x * x - 2.f * xAbs + 4.f/3.f);
     } else {
         return 0;
     }
@@ -231,10 +283,11 @@ float Grid::weightFunctionN(float x) {
 float Grid::weightGradientFunctionDelN(float x) {
     // Eq. 3.5
     // x here is the distance between a particle and a grid node.
-    if (fabs(x) >= 0 && fabs(x) < 1) {
-        return  (x * x * 3.0 / 2.0) - (2 * fabs(x));
-    } else if (fabs(x) < 2 && fabs(x) >= 1) {
-        return (-0.5 * x * x) + (2 * fabs(x)) - 2;
+    float xAbs = fabs(x);
+    if (xAbs >= 0 && xAbs < 1) {
+        return  (x * x * 3.0 / 2.0) - (2 * xAbs) * (x < 0 ? -1 : 1);
+    } else if (xAbs < 2 && xAbs >= 1) {
+        return ((-0.5 * x * x) + (2.f * xAbs) - 2) * (x < 0 ? -1 : 1);
     } else {
         return 0;
     }
@@ -251,17 +304,20 @@ float Grid::weightN(Vector3f particlePos, Vector3f gridNodePos) {
 }
 
 Vector3f Grid::weightGradientDelOmega(Vector3f particlePos, Vector3f nodePos) {
-    float x_dist = 1.f / m_gridSpacing * (particlePos.x() - nodePos.x());
-    float y_dist = 1.f / m_gridSpacing * (particlePos.y() - nodePos.y());
-    float z_dist = 1.f / m_gridSpacing * (particlePos.z() - nodePos.z());
+    float x_dist = (1.f / m_gridSpacing) * (particlePos.x() - nodePos.x());
+    float y_dist = (1.f / m_gridSpacing) * (particlePos.y() - nodePos.y());
+    float z_dist = (1.f / m_gridSpacing) * (particlePos.z() - nodePos.z());
+
+    float nx = weightFunctionN(x_dist);
+    float ny = weightFunctionN(y_dist);
+    float nz = weightFunctionN(z_dist);
+    float dnx = weightGradientFunctionDelN(x_dist);
+    float dny = weightGradientFunctionDelN(y_dist);
+    float dnz = weightGradientFunctionDelN(z_dist);
+
+    return (1.f / m_gridSpacing) * Vector3f(dnx * ny * nz, nx * dny * nz, nx * ny * dnz);
 
     // Eq 3.4
-    float N_ix = weightGradientFunctionDelN(x_dist) * weightFunctionN(y_dist) * weightFunctionN(z_dist);
-    float N_iy = weightFunctionN(x_dist) * weightGradientFunctionDelN(y_dist) * weightFunctionN(z_dist);
-    float N_iz = weightFunctionN(x_dist) * weightFunctionN(y_dist) * weightGradientFunctionDelN(z_dist);
-
-    Vector3f weightGradient(N_ix, N_iy, N_iz);
-    return weightGradient;
 }
 
 Matrix3f Grid::velocityGradient(Particle* p) {
@@ -272,9 +328,7 @@ Matrix3f Grid::velocityGradient(Particle* p) {
     Matrix3f velGrad = Matrix3f::Zero();
 
     for (unsigned int i = 0; i < m_nodes.size(); i++) {
-        if (m_nodes[i]->getMass() > 0) {
-            velGrad += m_nodes[i]->getNewVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
-        }
+        velGrad += m_nodes[i]->getNewVelocity() * weightGradientDelOmega(p->getPosition(), m_nodes[i]->getPosition()).transpose();
     }
     return velGrad;
 }
@@ -291,6 +345,9 @@ void Grid::computeGridVelocity(int thread, int numThreads)
 
             // Calculate final weight function
             float w = weightN(particlePos, gridNodePos);
+            if (w == 0) {
+                continue;
+            }
 
             Vector3f particleContribution;
             if (m_nodes[n]->getMass() == 0) {
@@ -319,7 +376,6 @@ void Grid::computeParticleVolumes(int t, int numThreads)
             GridNode* node = m_nodes[i];
             particleDensity += node->getMass() * weightN(particle->getPosition(), node->getPosition()) / pow(m_gridSpacing, 3);
         }
-
         particle->setVolume(particle->getMass() / particleDensity);
     }
 }
@@ -334,30 +390,50 @@ void Grid::computeGridForces(int thread, int numThreads)
     // For grid nodes within range
     for (unsigned int n = thread; n < m_nodes.size(); n += numThreads) {
         GridNode* curr = m_nodes[n];
+        curr->setForce(_gravity * curr->getMass());
         Vector3f sum = Vector3f::Zero();
         for (unsigned int p = 0; p < m_particles.size(); p++) {
             Vector3f del_w = weightGradientDelOmega(m_particles[p]->getPosition(), curr->getPosition());
+
             if (del_w == Vector3f::Zero())
                 continue;
 
             Matrix3f F_p = m_particles[p]->getPlasticDeformation();
 
-            //float J_p = F_p.determinant();
             Matrix3f F_e = m_particles[p]->getElasticDeformation();
 
-            //float V_p = J_p * m_particles[p]->getVolume()
+            //float V_p = m_particles[p]->getVolume()
             float V_p = m_particles[p]->getVolume();
-            Matrix3f stress = computeStress(F_p, F_e);
+            // STRESS CALCULATION
+            float Jp = F_p.determinant();
+            float Je = F_e.determinant();
+            float lambda_Fp = lambda(F_p, Jp);
+            float mu_Fp = mu(F_p, Jp);
+            if (thread == 0 && p == 1000)
+                cout << Jp << endl;
+            Matrix3f I = Matrix3f::Identity();
 
+            assert(!isinf(lambda_Fp));
+            assert(!isinf(mu_Fp));
+
+            assert(F_e.determinant() != 0);
+
+            // Compute Re from Fe using polar decomposition
+            JacobiSVD<MatrixXf> svd(F_e, ComputeFullU | ComputeFullV);
+            Matrix3f U = svd.matrixU();
+            Matrix3f V = svd.matrixV();
+            Matrix3f Re = U * V.transpose();
+
+            Matrix3f stress = ((2.f * mu_Fp) * (F_e - Re) * F_e.transpose()) + ((lambda_Fp) * (Je - 1.f) * Je * I);
+//            stress = Matrix3f::Identity();
+//            if (thread == 0 && p == 1000)
+//                cout << stress << endl << endl;
             Vector3f force = V_p * stress * del_w;
             sum += force;
         }
-        if (thread == 0 && sum.norm() > 0) {
-            cout << sum << endl << endl;
-        }
-        Vector3f force = -1 * sum;
 
-        curr->setForce(force);
+        Vector3f force = -1 * sum;
+        curr->setForce(curr->getForce() + force);
     }
 }
 
@@ -390,13 +466,13 @@ Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
 float Grid::lambda(Matrix3f Fp, float Jp) {
     float lambda_o = _Eo * _v / ((1.f + _v) * (1.f - 2.f*_v));
     float result = (lambda_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, lambda_o);
+    return result;
 }
 
 float Grid::mu(Matrix3f Fp, float Jp) {
     float mu_o = _Eo / (2.f * (1.f + _v));
     float result = (mu_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, mu_o);
+    return result;
 }
 
 void Grid::updateGridVelocities(float delta_t, int thread, int numThreads)
@@ -406,7 +482,7 @@ void Grid::updateGridVelocities(float delta_t, int thread, int numThreads)
         GridNode* curr = m_nodes[i];
         Vector3f v_star(0, 0, 0);
         if (curr->getMass() > 0) {
-            v_star = curr->getVelocity() + delta_t * (1.f / curr->getMass()) * (curr->getForce() + _gravity * curr->getMass());
+            v_star = curr->getVelocity() + delta_t * (1.f / curr->getMass()) * curr->getForce();
         }
 
         curr->setNewVelocity(v_star);
@@ -415,6 +491,14 @@ void Grid::updateGridVelocities(float delta_t, int thread, int numThreads)
 
 thread Grid::updateGridVelocitiesThread(float delta_t, int t, int numThreads) {
     return thread(&Grid::updateGridVelocities, this, delta_t, t, numThreads);
+}
+
+void Grid::updateColliderPositions(float delta_t) {
+    // Update the position of all colliders
+    for (unsigned int c = 0; c < m_colliders.size(); c++) {
+        CollisionObject* collider = m_colliders[c];
+        collider->updatePosition(delta_t);
+    }
 }
 
 void Grid::gridCollision(int thread, int numThreads)
@@ -472,24 +556,53 @@ void Grid::calculateDeformationGradient(float delta_t, int thread, int numThread
     // Step 7. See eq. 3.33 / 3.34
     for (unsigned int p = thread; p < m_particles.size(); p += numThreads) {
         Particle* particle = m_particles[p];
-        Matrix3f tempElastic = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle->getElasticDeformation();
-        Matrix3f tempF = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle->getDeformationGradient();
+        Matrix3f multiplier = Matrix3f::Identity() + delta_t * velocityGradient(particle);
+        Matrix3f deform = particle->getElasticDeformation() * particle->getPlasticDeformation();
+        Matrix3f deformPrime = multiplier * deform;
+        Matrix3f deformElasticPrime = multiplier * particle->getElasticDeformation();
 
-        // Compute the singular value decomposition.
-        JacobiSVD<Matrix3f> svd(tempElastic, ComputeFullU | ComputeFullV);
+        JacobiSVD<Matrix3f, NoQRPreconditioner> svd;
+        svd.compute(deformElasticPrime, ComputeFullU | ComputeFullV);
         Matrix3f U = svd.matrixU();
         Matrix3f V = svd.matrixV();
-
         // singularValues() returns an array of the singular values.
         Vector3f sigma = svd.singularValues();
         for (int j = 0; j < 3; j++) {   //Clamp Sigma's diagonal values
            sigma[j] = std::min(std::max(sigma[j], 1-_criticalCompression), 1+_criticalStretch);
         }
-        // Turn sigma into a matrix
         Matrix3f matSigma = sigma.asDiagonal();
+
+        assert(matSigma.isDiagonal());
         particle->setElasticDeformation(U * matSigma * V.transpose());
-        particle->setPlasticDeformation(V * matSigma.inverse() * U.transpose() * tempF);
-        particle->setDeformationGradient(tempF);
+        particle->setPlasticDeformation(V * matSigma.inverse() * U.transpose() * deformPrime);
+//        particle->setElasticDeformation(Matrix3f::Identity());
+//        particle->setPlasticDeformation(Matrix3f::Identity());
+
+
+//        Particle* particle = m_particles[p];
+//        Matrix3f tempElastic = (Matrix3f::Identity() + delta_t * velocityGradient(particle)) * particle->getElasticDeformation();
+////        if (thread == 0)
+////            cout << tempElastic << endl << endl;
+//        Matrix3f tempPlastic = particle->getPlasticDeformation();
+//        Matrix3f tempF = tempElastic * tempPlastic;
+
+//        // Compute the singular value decomposition.
+//        JacobiSVD<Matrix3f, NoQRPreconditioner> svd;
+//        svd.compute(tempElastic, ComputeFullU | ComputeFullV);
+//        Matrix3f U = svd.matrixU();
+//        Matrix3f V = svd.matrixV();
+
+//        // singularValues() returns an array of the singular values.
+//        Vector3f sigma = svd.singularValues();
+//        for (int j = 0; j < 3; j++) {   //Clamp Sigma's diagonal values
+//           sigma[j] = std::min(std::max(sigma[j], 1-_criticalCompression), 1+_criticalStretch);
+//        }
+//        // Turn sigma into a matrix
+//        Matrix3f matSigma = sigma.asDiagonal();
+//        particle->setElasticDeformation(U * matSigma * V.transpose());
+//        particle->setPlasticDeformation(V * matSigma.inverse() * U.transpose() * tempF);
+
+//        particle->setDeformationGradient(tempF);
     }
 }
 
@@ -581,6 +694,7 @@ bool Grid::outOfBounds(Particle* p) {
     if (pos.x() > max.x() || pos.x() < min.x()) {
         if (pos.y() > max.y() || pos.y() < min.y()) {
             if (pos.z() > max.z() || pos.z() < min.z()) {
+                cout << "Out of bounds" << endl;
                 out = true;
             }
         }

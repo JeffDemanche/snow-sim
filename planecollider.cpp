@@ -50,6 +50,10 @@ float PlaneCollider::coefficientOfFriction() {
     return m_u;
 }
 
+void PlaneCollider::updatePosition(float delta_t) {
+    //nothing needs to be done for stationary plane
+}
+
 std::vector<glm::vec3> PlaneCollider::drawingData() {
     int numVertices = 6;
     std::vector<glm::vec3> data(2*numVertices);

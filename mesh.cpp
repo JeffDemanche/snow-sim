@@ -143,6 +143,25 @@ Vector3f Mesh::randPosition()
     return randPoint;
 }
 
+float Mesh::signedTriVolume(Vector3f p1, Vector3f p2, Vector3f p3) {
+    float v321 = p3.x() * p2.y() * p1.z();
+    float v231 = p2.x() * p3.y() * p1.z();
+    float v312 = p3.x() * p1.y() * p2.z();
+    float v132 = p1.x() * p3.y() * p2.z();
+    float v213 = p2.x() * p1.y() * p3.z();
+    float v123 = p1.x() * p2.y() * p3.z();
+    return (1.0f / 6.0f) * (-v321 + v231 + v312 - v132 - v213 + v123);
+}
+
+float Mesh::volume() {
+    // https://stackoverflow.com/questions/1406029/how-to-calculate-the-volume-of-a-3d-mesh-object-the-surface-of-which-is-made-up
+    float volSum = 0;
+    for (size_t i = 0; i < _faces.size(); i++) {
+        volSum += signedTriVolume(_vertices[_faces[i].x()], _vertices[_faces[i].y()], _vertices[_faces[i].z()]);
+    }
+    return fabs(volSum);
+}
+
 bool Mesh::pointInMesh(Vector3f point)
 {
     int numIntersections = 0;

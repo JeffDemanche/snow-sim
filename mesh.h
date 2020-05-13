@@ -35,12 +35,16 @@ public:
      */
     Vector3f randPosition();
 
+    float volume();
+
 
 private:
     std::vector<Eigen::Vector3f> _vertices;
     std::vector<Eigen::Vector3i> _faces;
 
     bool pointInMesh(Vector3f point);
+
+    float signedTriVolume(Vector3f p1, Vector3f p2, Vector3f p3);
 
     float triSign(Vector2f a, Vector2f b, Vector2f c);
     float randomNumber(float Min, float Max);

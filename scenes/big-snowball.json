@@ -1,0 +1,27 @@
+{
+  "object": "D:/CSCI2240/snow-sim/meshes/big-sphere.obj",
+  "output": "D:/CSCI2240/snow-sim/out",
+  "particles": 1000,
+  "frames": 60,
+  "debugStepTimes": true,
+  "debugParticles": 1,
+
+  "grid": {
+    "gridMin": [-24, -48, -24],
+    "gridMax": [24, 16, 24],
+    "gridSpacing": 0.8,
+    "initialVelocity": [0, 0, 0],
+    "gravity": [0, -5, 0],
+    "groundHeight": -36
+  },
+
+  "hyperparameters": {
+    "criticalCompression": 2.5E-2,
+    "criticalStretch": 7.5E-3,
+    "youngsModulus": 1.4E5,
+    "hardeningCoefficient": 10,
+    "poissonsRatio": 0.2,
+    "density": 400,
+    "particleSize": 0.0072
+  }
+}

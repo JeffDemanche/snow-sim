@@ -18,7 +18,7 @@ MPM::MPM(Mesh snowMesh, QString outDir, int numParticles, int numFrames, float s
     m_debugStepTimes(debugStepTimes),
     m_debugParticles(debugParticles)
 {
-    m_grid = new Grid(snowMesh, numParticles, SceneFile::defaultGridInfo(), SceneFile::defaultHyperparameterInfo());
+    m_grid = new Grid(snowMesh, numParticles, SceneFile::defaultGridInfo(), SceneFile::defaultHyperparameterInfo(), SceneFile::defaultCollisionInfo());
     m_particlePositions = m_grid->getPoints();
     m_firstStep = true;
 }
@@ -36,7 +36,7 @@ MPM::MPM(string sceneFile) {
     m_debugStepTimes = scene.getDebugStepTimes();
     m_debugParticles = scene.getDebugParticles();
 
-    m_grid = new Grid(m_snowMesh, m_numParticles, scene.getGridInfo(), scene.getHyperparameterInfo());
+    m_grid = new Grid(m_snowMesh, m_numParticles, scene.getGridInfo(), scene.getHyperparameterInfo(), scene.getCollisionInfo());
     m_particlePositions = m_grid->getPoints();
     m_firstStep = true;
 }
@@ -62,8 +62,6 @@ void MPM::runSimulation() {
 
 std::vector<Vector3f> MPM::update(float seconds, int currentFrame) {
 
-    thread simThreads[4];
-
     m_grid->setCurrentFrame(currentFrame);
 
     // Step 1
@@ -88,8 +86,6 @@ std::vector<Vector3f> MPM::update(float seconds, int currentFrame) {
 //    doStep(6, seconds, "explicit solver");
 //    //m_grid->implicitSolver();
 
-    // Step 6
-    doStep(6, seconds, "explicit solver");
 
     // Step 7
     doStep(7, seconds, "calculate deformation gradient");
@@ -100,6 +96,8 @@ std::vector<Vector3f> MPM::update(float seconds, int currentFrame) {
     // Step 9
     doStep(9, seconds, "particle collisions");
 
+    // Step 6
+    doStep(6, seconds, "explicit solver");
 
     // Step 10
     doStep(10, seconds, "update particle positions");
@@ -120,7 +118,7 @@ void MPM::doStep(int step, float delta_t, string description) {
         cout << "\tStep " << step << " begin:" << endl;
     }
 
-    int NUM_THREADS = 4;
+    const int NUM_THREADS = 4;
 
     assert(step >= 1 && step <= 10);
     switch(step) {
@@ -171,6 +169,7 @@ void MPM::doStep(int step, float delta_t, string description) {
         break;
     }
     case 5: {
+        m_grid->updateColliderPositions(delta_t);
         thread t[NUM_THREADS];
         for (int i = 0; i < NUM_THREADS; i++) {
             t[i] = m_grid->gridCollisionThread(i, NUM_THREADS);

@@ -13,6 +13,7 @@ public:
     Eigen::Vector3f getVelocity();
     float coefficientOfFriction();
     std::vector<glm::vec3> drawingData();
+    void updatePosition(float delta_t);
 
 private:
     float m_groundHeight;

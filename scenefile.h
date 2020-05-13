@@ -23,6 +23,16 @@ struct HyperparameterInfo {
     float hardeningCoefficient;
     float poissonsRatio;
     float density;
+    float particleSize;
+};
+
+struct CollisionInfo {
+    string type;
+    Vector3f center;
+    Vector3f velocity;
+    float u;
+    float rot_z;
+    Vector3f scale;
 };
 
 class SceneFile
@@ -52,7 +62,14 @@ public:
     HyperparameterInfo getHyperparameterInfo();
     static HyperparameterInfo defaultHyperparameterInfo() {
         return HyperparameterInfo {
-            2.5E-2, 7.5E-3, 1.4E5, 10, 0.2, 400
+            2.5E-2, 7.5E-3, 1.4E5, 10, 0.2, 400, 0.0072
+        };
+    };
+
+    CollisionInfo getCollisionInfo();
+    static CollisionInfo defaultCollisionInfo() {
+        return CollisionInfo {
+            "none", Vector3f(0,0,0), Vector3f(0,0,0), 0.6, 0, Vector3f(1, 1, 1)
         };
     };
 
@@ -67,6 +84,7 @@ private:
 
     GridInfo m_gridInfo;
     HyperparameterInfo m_hyperparameterInfo;
+    CollisionInfo m_collisionInfo;
 
 };
 

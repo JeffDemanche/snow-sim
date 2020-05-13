@@ -16,7 +16,7 @@ using namespace std;
 class Grid
 {
 public:
-    Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, HyperparameterInfo hyperparamaterInfo);
+    Grid(Mesh snowMesh, size_t numParticles, GridInfo gridInfo, HyperparameterInfo hyperparamaterInfo, CollisionInfo collisionInfo);
     ~Grid();
 
     void setCurrentFrame(int currentFrame);
@@ -30,6 +30,7 @@ public:
 
     GridNode* getNodeAt(int x, int y, int z);
     int getNodeIndexAt(int x, int y, int z);
+    vector<int> getNeighboringGridNodes(Vector3i gridNodeOrigin, Vector3f particlePos);
 
     /**
      * Step 1. Calculates the grid mass values based on particles.
@@ -66,6 +67,7 @@ public:
      */
     void gridCollision(int thread, int numThreads);
     thread gridCollisionThread(int t, int numThreads);
+    void updateColliderPositions(float delta_t);
 
     /**
      * Step 6: Explicit integrator
@@ -136,13 +138,13 @@ private:
     /**
      * Initializes all colliding objects in the scene
      */
-    void initColliders();
+    void initColliders(CollisionInfo collisionInfo);
 
     /**
      * This is run before the simulation even begins. It loads the particles
      * taken from the mesh data into the particle vector with initial states.
      */
-    void initParticles(vector<Vector3f> points);
+    void initParticles(vector<Particle*> points);
 
     /**
      * Takes minimum and maximum corners of the grid and creates the GridNodes
@@ -153,7 +155,7 @@ private:
      * Generates a list of points positions inside the snow mesh. The
      * amount of particles is determined by m_numParticles.
      */
-    vector<Vector3f> pointsFromMesh(Mesh mesh, size_t numParticles);
+    vector<Particle*> particlesFromMesh(Mesh mesh, float density, float particleSize, Vector3f initialVelocity);
 
     /**
      * Finds bounds of grid based on mesh bounding box and lowest y point in scene (the ground)
