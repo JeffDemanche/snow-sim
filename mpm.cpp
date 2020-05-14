@@ -46,17 +46,35 @@ MPM::MPM() {
 }
 
 void MPM::runSimulation() {
+//    Eigen::initParallel();
+//    for (int i = 0; i < m_numFrames; i++) {
+//        cout << "Frame: " << i << endl;
+//        auto t0 = high_resolution_clock::now();
+
+//        update(m_stepLength, i);
+
+//        auto t1 = high_resolution_clock::now();
+//        auto duration = duration_cast<milliseconds>(t1-t0).count();
+
+//        cout << "Frame simulation took " << duration << "ms" << endl;
+//    }
+
+    float fps = 24;
+    int stepsInFrame = int((1.f / fps) * (1.f / m_stepLength));
     Eigen::initParallel();
     for (int i = 0; i < m_numFrames; i++) {
         cout << "Frame: " << i << endl;
         auto t0 = high_resolution_clock::now();
 
-        update(m_stepLength, i);
+        for (int s = 0; s < stepsInFrame; s++) {
+            update(m_stepLength, i);
+        }
 
         auto t1 = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(t1-t0).count();
 
-        cout << "Frame simulation took " << duration << "ms" << endl;
+        writeFrameToFile(i);
+        cout << "Frame simulation took " << duration << "ms" << " with " << stepsInFrame << " timesteps" << endl;
     }
 }
 
@@ -105,7 +123,7 @@ std::vector<Vector3f> MPM::update(float seconds, int currentFrame) {
     // Or other way to send updated positions to GLWidget
     std::vector<Vector3f> newPositions = m_grid->getPoints();
 
-    writeFrameToFile(currentFrame);
+    //writeFrameToFile(currentFrame);
 
     m_grid->reset();
     return newPositions;

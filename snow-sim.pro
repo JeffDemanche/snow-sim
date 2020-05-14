@@ -1,8 +1,9 @@
 QT += gui
 QT += xml
 QT += core gui opengl
+QT += widgets
 
-CONFIG += c++11 console
+#CONFIG += c++11 console
 CONFIG -= app_bundle
 
 QMAKE_CXXFLAGS += -std=c++14

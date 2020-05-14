@@ -1,0 +1,29 @@
+{
+  "object": "/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/meshes/snow_text_2.obj",
+  "output": "/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/out",
+  "particles": 250,
+  "frames": 36,
+  "stepLength": 0.04,
+  "debugStepTimes": true,
+  "debugParticles": 0,
+
+
+  "grid": {
+    "gridMin": [-0.18, -0.13, -0.08],
+    "gridMax": [0.18, 0.15, 0.08],
+    "gridSpacing": 0.010,
+    "initialVelocity": [0, 0, 0],
+    "gravity": [0, -1, 0],
+    "groundHeight": -0.1
+  },
+
+  "hyperparameters": {
+    "criticalCompression": 2.5E-2,
+    "criticalStretch": 7.5E-3,
+    "youngsModulus": 1.4E5,
+    "hardeningCoefficient": 10,
+    "poissonsRatio": 0.2,
+    "density": 400,
+    "particleSize": 0.010
+  }
+}
