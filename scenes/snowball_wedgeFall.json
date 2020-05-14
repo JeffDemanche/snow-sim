@@ -6,16 +6,14 @@
   "stepLength": 0.005,
   "debugStepTimes": true,
   "debugParticles": 2,
-
   "grid": {
-    "gridMin": [-1, -0.5, -1],
-    "gridMax": [1, 0.20, 1],
+    "gridMin": [-1.05, -0.71, -1.05],
+    "gridMax": [1.05, 0.20, 1.05],
     "gridSpacing": 0.005,
     "initialVelocity": [0, 0, 0],
     "gravity": [0, -4, 0],
     "groundHeight": -0.2
   },
-
   "hyperparameters": {
     "criticalCompression": 2.5E-2,
     "criticalStretch": 7.5E-3,
@@ -23,14 +21,13 @@
     "hardeningCoefficient": 10,
     "poissonsRatio": 0.2,
     "density": 400,
-    "particleSize": 0.012
+    "particleSize": 0.010
   },
-
   "collisions": {
     "type": "cube",
     "center": [0, -0.15, 0],
     "velocity": [0, 0, 0],
-    "coefficientOfFriction": 0.6,
+    "coefficientOfFriction": 0.8,
     "rotZ": 45,
     "scale": [0.1, 0.1, 0.2]
   }

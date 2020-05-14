@@ -2,15 +2,16 @@
   "object": "D:/CSCI2240/snow-sim/scenes/cube1.obj",
   "output": "D:/CSCI2240/snow-sim/out",
   "particles": 2000,
-  "frames": 60,
+  "frames": 160,
+  "stepLength": 0.01,
   "debugStepTimes": true,
   "debugParticles": 1,
 
   "grid": {
-    "gridMin": [-4, -6.82379, -4],
-    "gridMax": [4, 1.55341, 4],
+    "gridMin": [-7, -8, -7],
+    "gridMax": [7, 3, 7],
     "gridSpacing": 0.15,
-    "initialVelocity": [0, 0, 1],
+    "initialVelocity": [0, 0, 0],
     "gravity": [0, -1, 0],
     "groundHeight": -3.25
   },
@@ -21,6 +22,7 @@
     "youngsModulus": 1.4E5,
     "hardeningCoefficient": 10,
     "poissonsRatio": 0.2,
-    "density": 1000
+    "density": 400,
+    "particleSize": 0.18
   }
 }

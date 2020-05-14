@@ -397,14 +397,14 @@ void Grid::computeGridForces(int thread, int numThreads)
                 continue;
 
             Matrix3f F_p = m_particles[p]->getPlasticDeformation();
-            //m_particles[p]->setPlasticDeformation(m_particles[p]->getPlasticDeformation() * 0.001 + Matrix3f::Identity());
             Matrix3f F_e = m_particles[p]->getElasticDeformation();
 
-            //float V_p = m_particles[p]->getVolume()
-            float V_p = m_particles[p]->getVolume();
             // STRESS CALCULATION
             float Jp = F_p.determinant();
             float Je = F_e.determinant();
+
+            float V_p = Jp * m_particles[p]->getVolume();
+
             float lambda_Fp = lambda(F_p, Jp);
             float mu_Fp = mu(F_p, Jp);
 
@@ -422,8 +422,8 @@ void Grid::computeGridForces(int thread, int numThreads)
             Matrix3f Re = U * V.transpose();
 
             Matrix3f stress = ((2.f * mu_Fp) * (F_e - Re) * F_e.transpose()) + ((lambda_Fp) * (Je - 1.f) * Je * I);
-            stress *= 1;
-            //stress = Matrix3f::Identity();
+            stress = stress;// + Matrix3f::Identity();
+
             Vector3f force = -V_p * stress * del_w;
             sum += force;
         }
@@ -460,13 +460,13 @@ Matrix3f Grid::computeStress(Matrix3f Fe, Matrix3f Fp) {
 float Grid::lambda(Matrix3f Fp, float Jp) {
     float lambda_o = _Eo * _v / ((1.f + _v) * (1.f - 2.f*_v));
     float result = (lambda_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, 1000000.f);
+    return fmin(result, 100.f);
 }
 
 float Grid::mu(Matrix3f Fp, float Jp) {
     float mu_o = _Eo / (2.f * (1.f + _v));
     float result = (mu_o * exp(_hardening * (1.f - Jp)));
-    return fmin(result, 1000000.f);
+    return fmin(result, 100.f);
 }
 
 void Grid::updateGridVelocities(float delta_t, int thread, int numThreads)
