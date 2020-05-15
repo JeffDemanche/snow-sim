@@ -1,0 +1,34 @@
+{
+  "object": "D:/CSCI2240/snow-sim/meshes/olaf.obj",
+  "output": "D:/CSCI2240/snow-sim/out",
+  "particles": 1000,
+  "frames": 100,
+  "stepLength": 0.01,
+  "debugStepTimes": true,
+  "debugParticles": 2,
+  "grid": {
+    "gridMin": [-0.6, -0.4, -0.6],
+    "gridMax": [0.6, 0.3, 0.6],
+    "gridSpacing": 0.02,
+    "initialVelocity": [0, 0, 0],
+    "gravity": [0, -4, 0],
+    "groundHeight": 0.1
+  },
+  "hyperparameters": {
+    "criticalCompression": 2.5E-2,
+    "criticalStretch": 7.5E-3,
+    "youngsModulus": 1.4E5,
+    "hardeningCoefficient": 10,
+    "poissonsRatio": 0.2,
+    "density": 400,
+    "particleSize": 0.010
+  },
+  "collisions": {
+    "type": "sphere",
+    "center": [0, 1, 0],
+    "velocity": [0, -1, 0],
+    "coefficientOfFriction": 0.8,
+    "rotZ": 45,
+    "scale": [20, 20, 20]
+  }
+}

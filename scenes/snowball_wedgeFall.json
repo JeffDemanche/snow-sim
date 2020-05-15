@@ -20,7 +20,7 @@
     "youngsModulus": 1.4E5,
     "hardeningCoefficient": 10,
     "poissonsRatio": 0.2,
-    "density": 400,
+    "density": 2000,
     "particleSize": 0.010
   },
   "collisions": {

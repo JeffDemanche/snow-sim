@@ -1,0 +1,38 @@
+{
+  "object": "/home/jsoenkse/course/cs224/snow-sim/meshes/snowball.obj",
+  "output": "/home/jsoenkse/course/cs224/snow-sim/out/snowball_wedgeFall_dpt",
+  "particles": 4000,
+  "frames": 24,
+  "stepLength": 0.005,
+  "debugStepTimes": true,
+  "debugParticles": 0,
+
+
+  "grid": {
+    "gridMin": [-0.13, -0.22, -0.13],
+    "gridMax": [0.13, 0.11, 0.13],
+    "gridSpacing": 0.005,
+    "initialVelocity": [0, 0, 0],
+    "gravity": [0, -10, 0],
+    "groundHeight": -0.2
+  },
+
+  "hyperparameters": {
+    "criticalCompression": 2.5E-2,
+    "criticalStretch": 7.5E-3,
+    "youngsModulus": 1.4E5,
+    "hardeningCoefficient": 10,
+    "poissonsRatio": 0.2,
+    "density": 400,
+    "particleSize": 0.0072
+  },
+
+  "collisions": {
+    "type": "cube",
+    "center": [0, -0.15, 0],
+    "velocity": [0, 0, 0],
+    "coefficientOfFriction": 0.6,
+    "rotZ": 45,
+    "scale": [0.1, 0.1, 0.2]
+  }
+}

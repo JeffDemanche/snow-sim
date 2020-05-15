@@ -155,7 +155,7 @@ private:
      * Generates a list of points positions inside the snow mesh. The
      * amount of particles is determined by m_numParticles.
      */
-    vector<Particle*> particlesFromMesh(Mesh mesh, float density, float particleSize, Vector3f initialVelocity);
+    vector<Particle*> particlesFromMesh(Mesh mesh, float density, float particleSize, Vector3f initialVelocity, int totalParticles);
 
     /**
      * Finds bounds of grid based on mesh bounding box and lowest y point in scene (the ground)

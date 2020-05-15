@@ -30,12 +30,12 @@ AppArgs snowSimParseArgs() {
     QCommandLineOption visualize("viz");
     parser.addOption(visualize);
 
-    parser.process(QApplication::arguments());
+    parser.process(QCoreApplication::arguments());
 
     const QStringList args = parser.positionalArguments();
     if(args.size() < 4) {
         cerr << "Error: Wrong number of arguments" << endl;
-        QApplication::exit(1);
+        QCoreApplication::exit(1);
     }
 
     float stepLength = parser.value("steplength").toStdString() == "default"
@@ -54,12 +54,12 @@ AppArgs snowSimParseArgs() {
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QCoreApplication a(argc, argv);
 
     QCommandLineParser parser;
     QCommandLineOption f({"f", "scenefile"}, "Scene file to use", "scenefile", "");
     parser.addOption(f);
-    parser.process(QApplication::arguments());
+    parser.process(QCoreApplication::arguments());
 
     auto t0 = high_resolution_clock::now();
 
@@ -70,17 +70,17 @@ int main(int argc, char *argv[])
     else {
         AppArgs args = snowSimParseArgs();
 
-        // Add --viz to command to run GUI.
-        if (args.vizualize) {
-            MainWindow w;
-            w.show();
-            return a.exec();
-        } else {
+//        // Add --viz to command to run GUI.
+//        if (args.vizualize) {
+//            MainWindow w;
+//            w.show();
+//            return a.exec();
+//        } else {
             Mesh m;
             m.loadFromFile(args.infile.toStdString());
             MPM mpm = MPM(m, args.outDir, args.numParticles, args.numFrames, args.stepLength);
             mpm.runSimulation();
-        }
+        //}
     }
 
     auto t1 = high_resolution_clock::now();

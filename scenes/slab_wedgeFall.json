@@ -1,0 +1,38 @@
+{
+  "object": "/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/meshes/slab.obj",
+  "output": "/Users/jennasoenksen/Desktop/cs2240/final/code/snow-sim/out",
+  "particles": 3000,
+  "frames": 36,
+  "stepLength": 10E-5,
+  "debugStepTimes": false,
+  "debugParticles": 0,
+
+
+  "grid": {
+    "gridMin": [-0.13, -0.17, -0.07],
+    "gridMax": [0.13, 0.11, 0.07],
+    "gridSpacing": 0.010,
+    "initialVelocity": [0, 0, 0],
+    "gravity": [0, -1, 0],
+    "groundHeight": -0.15
+  },
+
+  "hyperparameters": {
+    "criticalCompression": 2.5E-2,
+    "criticalStretch": 7.5E-3,
+    "youngsModulus": 1.4E5,
+    "hardeningCoefficient": 10,
+    "poissonsRatio": 0.2,
+    "density": 400,
+    "particleSize": 0.005
+  },
+
+  "collisions": {
+    "type": "cube",
+    "center": [0, -0.09, 0],
+    "velocity": [0, 0, 0],
+    "coefficientOfFriction": 0.6,
+    "rotZ": 45,
+    "scale": [0.04, 0.04, 0.2]
+  }
+}

@@ -3,23 +3,13 @@ import bmesh
 
 ### PARAMETERS TO SET
 
-num_steps = 2000
-step_length = 10E-5
-target_framerate = 1.0/24.0
+num_frames = 7
 filepath_base = 'D:/CSCI2240/snow-sim/out/particles'
 
 setup_materials = True
 particle_density=20
 
 ###
-
-steps_per_second = 1.0 / step_length
-steps_per_frame = steps_per_second * target_framerate
-num_frames = int(num_steps * step_length)
-
-print("Steps per Second: " + str(steps_per_second))
-print("Steps per Frame: " + str(steps_per_frame))
-print("Num Frames: " + str(num_frames))
 
 mesh = bpy.data.meshes.new("mesh")
 obj = bpy.data.objects.new("SnowPointCloud", mesh)
@@ -59,9 +49,11 @@ def update_bounds(x, y, z):
     if z < z_min:
         z_min = z
 
+frame = 0
 while frame < num_frames:
-    step = frame * steps_per_frame
-    filepath = filepath_base + "." + str(step).zfill(5)
+    filepath = filepath_base + "." + str(frame).zfill(5)
+
+    print(filepath)
 
     vertsPos = []
     
@@ -75,6 +67,7 @@ while frame < num_frames:
                 update_bounds(x, y, z)
                 vertsPos.append((x, y, z))
                 
+        print(len(vertsPos))
         mesh.from_pydata(vertsPos, [], [])
         basis_key = obj.shape_key_add(from_mix=False)
     else:
@@ -100,6 +93,7 @@ while frame < num_frames:
                 this_key.keyframe_insert("value", frame=frame + 1)
                 
                 vert_index += 1
+    frame += 1
                 
 if setup_materials:
     bpy.context.scene.render.engine = 'CYCLES'
